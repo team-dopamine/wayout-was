@@ -1,4 +1,4 @@
-package kr.wayout.wayout;
+package kr.wayout;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
