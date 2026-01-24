@@ -2,6 +2,8 @@ package kr.wayout.domain.member;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import kr.wayout.global.common.BaseEntity;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -17,6 +19,7 @@ public class Member extends BaseEntity {
     @Column(name = "nickname", nullable = false, length = 64)
     private String nickname;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;
 

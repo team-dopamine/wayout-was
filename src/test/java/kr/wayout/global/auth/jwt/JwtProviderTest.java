@@ -87,7 +87,7 @@ class JwtProviderTest {
     }
 
     @Test
-    @DisplayName("유효하지 않은 토큰 검증 실패")
+    @DisplayName("만료된 토큰 검증 실패")
     void validateToken_expired() {
         // given
         JwtProvider shortLivedProvider = new JwtProvider(
