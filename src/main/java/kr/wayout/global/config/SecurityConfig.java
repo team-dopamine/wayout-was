@@ -1,5 +1,7 @@
 package kr.wayout.global.config;
 
+import kr.wayout.global.auth.CustomOAuth2UserService;
+import kr.wayout.global.auth.OAuth2SuccessHandler;
 import kr.wayout.global.auth.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +23,9 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
@@ -40,6 +44,14 @@ public class SecurityConfig {
                         // .requestMatchers("/api/members/**").authenticated()
                         // 우선적으로는 모두 허용
                         .anyRequest().permitAll()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        // TODO: SuccessUrl은 추후 온보딩 페이지 경로로 설정
+                        .successHandler(oAuth2SuccessHandler)
+                        .failureUrl("/auth/error")
                 )
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
