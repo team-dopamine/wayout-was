@@ -8,7 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import kr.wayout.domain.problem.Problem;
-import kr.wayout.domain.user.User;
+import kr.wayout.domain.member.Member;
 import kr.wayout.global.common.BaseEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -34,8 +34,8 @@ public class Submission extends BaseEntity {
     private Boolean isOpen = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "problem_id", nullable = false)
