@@ -1,4 +1,4 @@
-package kr.wayout.domain.user;
+package kr.wayout.domain.member;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseEntity {
+public class Member extends BaseEntity {
 
     @Column(name = "email", nullable = false, unique = true, length = 64)
     private String email;
@@ -18,7 +18,7 @@ public class User extends BaseEntity {
     private String nickname;
 
     @Builder
-    public User(String email, String nickname) {
+    public Member(String email, String nickname) {
         this.email = email;
         this.nickname = nickname;
     }
