@@ -17,6 +17,9 @@ public class Member extends BaseEntity {
     @Column(name = "nickname", nullable = false, length = 64)
     private String nickname;
 
+    @Column(name = "role", nullable = false)
+    private Role role;
+
     @Builder
     public Member(String email, String nickname) {
         this.email = email;
