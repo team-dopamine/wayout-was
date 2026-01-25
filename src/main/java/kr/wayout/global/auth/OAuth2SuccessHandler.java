@@ -31,13 +31,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
         accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge((int) jwtProvider.getExpirationTime(accessToken));
+        accessTokenCookie.setMaxAge((int) (jwtProvider.getExpirationTime(accessToken) / 1000));
         response.addCookie(accessTokenCookie);
 
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setMaxAge((int) jwtProvider.getExpirationTime(refreshToken));
+        refreshTokenCookie.setMaxAge((int) (jwtProvider.getExpirationTime(refreshToken) / 1000));
         response.addCookie(refreshTokenCookie);
 
         String redirectUrl = "/auth/oauth?isNewMember=" + isNewMember;

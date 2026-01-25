@@ -23,6 +23,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2User oAuth2User = super.loadUser(userRequest);
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
+        // TODO: email이 null 또는 제대로 제공되지 않는 경우에 대한 예외 처리 필요
         String email = (String) attributes.get("email");
 
         Member member = memberService.readOrCreate(email);

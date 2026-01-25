@@ -18,7 +18,7 @@ public class Member extends BaseEntity {
     @Column(name = "email", nullable = false, unique = true, length = 64)
     private String email;
 
-    @Column(name = "nickname", nullable = false, length = 64)
+    @Column(name = "nickname", nullable = false, length = 12)
     private String nickname;
 
     @Enumerated(EnumType.STRING)
