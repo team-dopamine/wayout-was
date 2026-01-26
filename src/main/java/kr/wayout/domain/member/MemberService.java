@@ -29,7 +29,7 @@ public class MemberService {
     public void changeNickname(String email, String nickname) {
         Member member = findByEmail(email);
         // TODO: Custom Exception 도입 후 수정 필요
-        if (nickname.isBlank() && nickname.length() > 12) {
+        if (nickname.isBlank() || nickname.length() > 12) {
             throw new IllegalArgumentException("유효하지 않은 닉네임입니다.");
         }
         member.changeNickname(nickname);
