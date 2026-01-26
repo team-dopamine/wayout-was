@@ -50,7 +50,7 @@ public class RefreshTokenStore {
     }
 
     private void removeExpiredTokens() {
-        tokenStore.entrySet().removeIf(entry -> jwtProvider.validateToken(entry.getValue()));
+        tokenStore.entrySet().removeIf(entry -> !jwtProvider.validateToken(entry.getValue()));
     }
 
 }
