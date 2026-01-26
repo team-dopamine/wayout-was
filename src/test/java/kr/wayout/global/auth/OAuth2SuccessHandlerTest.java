@@ -7,6 +7,7 @@ import kr.wayout.domain.member.MemberService;
 import kr.wayout.domain.member.Role;
 import kr.wayout.domain.member.dto.OAuth2UserInfo;
 import kr.wayout.global.auth.jwt.JwtProvider;
+import kr.wayout.global.auth.jwt.RefreshTokenStore;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +36,9 @@ class OAuth2SuccessHandlerTest {
 
     @Mock
     private Authentication authentication;
+
+    @Mock
+    private RefreshTokenStore refreshTokenStore;
 
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
