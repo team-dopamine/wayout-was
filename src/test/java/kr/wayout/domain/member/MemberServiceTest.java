@@ -108,7 +108,7 @@ class MemberServiceTest {
 
         // when & then
         Assertions.assertThatThrownBy(() -> memberService.changeNickname(email, ""))
-                .isInstanceOf(IllegalAccessException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("유효하지 않은 닉네임입니다.");
     }
 
