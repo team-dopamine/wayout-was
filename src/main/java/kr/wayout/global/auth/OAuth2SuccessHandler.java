@@ -5,7 +5,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.wayout.domain.member.Member;
-import kr.wayout.domain.member.dto.OAuth2UserInfo;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import kr.wayout.global.auth.jwt.RefreshTokenStore;
 import lombok.RequiredArgsConstructor;

@@ -2,7 +2,6 @@ package kr.wayout.global.auth;
 
 import kr.wayout.domain.member.Member;
 import kr.wayout.domain.member.MemberService;
-import kr.wayout.domain.member.dto.OAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
