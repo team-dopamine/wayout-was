@@ -1,12 +1,14 @@
 package kr.wayout.domain.member.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import kr.wayout.domain.member.MemberService;
 import kr.wayout.domain.member.dto.UpdateNicknameDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,7 +21,7 @@ public class MemberController implements MemberApi {
 
     @Override
     @PatchMapping("/me")
-    public ResponseEntity<?> update(@AuthenticationPrincipal String email, UpdateNicknameDto.Request dto) {
+    public ResponseEntity<?> update(@AuthenticationPrincipal String email,  @Valid @RequestBody UpdateNicknameDto.Request dto) {
         return ResponseEntity.ok(memberService.changeNickname(email, dto));
     }
 
