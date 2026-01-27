@@ -1,4 +1,4 @@
-package kr.wayout.global.auth;
+package kr.wayout.global.auth.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

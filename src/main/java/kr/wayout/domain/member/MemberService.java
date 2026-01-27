@@ -1,11 +1,14 @@
 package kr.wayout.domain.member;
 
+import kr.wayout.domain.member.dto.UpdateNicknameDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MemberService {
@@ -26,13 +29,17 @@ public class MemberService {
     }
 
     @Transactional
-    public void changeNickname(String email, String nickname) {
+    public UpdateNicknameDto.Response changeNickname(String email, UpdateNicknameDto.Request dto) {
         Member member = findByEmail(email);
         // TODO: Custom Exception 도입 후 수정 필요
-        if (nickname.isBlank() || nickname.length() > 12) {
-            throw new IllegalArgumentException("유효하지 않은 닉네임입니다.");
-        }
+        String oldNickName = member.getNickname();
+        String nickname = dto.getNickname();
+
         member.changeNickname(nickname);
+
+        String message = "닉네임 변경에 성공하였습니다.";
+        log.info("사용자({})의 닉네임이 (전: {})에서 (후: {})로 변경되었습니다.", email, oldNickName, nickname);
+        return new UpdateNicknameDto.Response(nickname, message);
     }
 
     private Member findByEmail(String email) {

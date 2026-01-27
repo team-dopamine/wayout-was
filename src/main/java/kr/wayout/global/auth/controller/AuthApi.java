@@ -7,11 +7,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.wayout.domain.member.dto.OAuth2UserInfo;
-import kr.wayout.global.auth.SignOutDto;
+import kr.wayout.global.auth.OAuth2UserInfo;
+import kr.wayout.global.auth.dto.SignOutDto;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.CookieValue;
 
 @Tag(name = "[인증 관련 API]", description = "사용자 인증 관련 API")
 public interface AuthApi {
@@ -24,7 +22,7 @@ public interface AuthApi {
             ),
             @ApiResponse(responseCode = "401", description = "토큰이 만료되어 이미 로그아웃 된 상태")
     })
-    ResponseEntity<?> signOut(OAuth2UserInfo userInfo, HttpServletResponse response);
+    ResponseEntity<?> signOut(String email, HttpServletResponse response);
 
     @Operation(
             summary = "Access Token 재발급",

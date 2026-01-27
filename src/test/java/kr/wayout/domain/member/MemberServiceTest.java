@@ -1,5 +1,6 @@
 package kr.wayout.domain.member;
 
+import kr.wayout.domain.member.dto.UpdateNicknameDto;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -84,52 +85,16 @@ class MemberServiceTest {
                 .role(Role.USER)
                 .build();
 
+        UpdateNicknameDto.Request request = new UpdateNicknameDto.Request(newNickname);
+
         BDDMockito.given(memberRepository.findByEmail(email)).willReturn(Optional.of(member));
 
         // when
-        memberService.changeNickname(email, newNickname);
+        UpdateNicknameDto.Response response = memberService.changeNickname(email, request);
 
         // then
         Assertions.assertThat(member.getNickname()).isEqualTo(newNickname);
+        Assertions.assertThat(response.getNickname()).isEqualTo(newNickname);
     }
 
-    @Test
-    @DisplayName("새 닉네임 변경 실패 - 길이가 0")
-    void changeNickname_empty_failed() {
-        // given
-        String email = "example4@gmail.com";
-        Member member = Member.builder().
-                email(email)
-                .nickname("USER_1234")
-                .role(Role.USER)
-                .build();
-
-        BDDMockito.given(memberRepository.findByEmail(email)).willReturn(Optional.of(member));
-
-        // when & then
-        Assertions.assertThatThrownBy(() -> memberService.changeNickname(email, ""))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("유효하지 않은 닉네임입니다.");
-    }
-
-    @Test
-    @DisplayName("새 닉네임 길이 초과")
-    void changeNickname_long_failed() {
-        // given
-        String email = "example5@gmail.com";
-        String longNickname = "this_is_long_nickname";
-
-        Member member = Member.builder().
-                email(email)
-                .nickname("USER_1234")
-                .role(Role.USER)
-                .build();
-
-        BDDMockito.given(memberRepository.findByEmail(email)).willReturn(Optional.of(member));
-
-        // when & then
-        Assertions.assertThatThrownBy(() -> memberService.changeNickname(email, longNickname))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("유효하지 않은 닉네임입니다.");
-    }
 }

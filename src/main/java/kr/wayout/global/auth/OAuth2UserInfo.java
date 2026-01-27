@@ -1,4 +1,4 @@
-package kr.wayout.domain.member.dto;
+package kr.wayout.global.auth;
 
 import kr.wayout.domain.member.Member;
 import lombok.Getter;
