@@ -3,9 +3,7 @@ package kr.wayout.global.auth;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import kr.wayout.domain.member.Member;
-import kr.wayout.domain.member.MemberService;
 import kr.wayout.domain.member.Role;
-import kr.wayout.domain.member.dto.OAuth2UserInfo;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import kr.wayout.global.auth.jwt.RefreshTokenStore;
 import org.assertj.core.api.Assertions;
@@ -22,8 +20,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 
 import java.io.IOException;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class OAuth2SuccessHandlerTest {
