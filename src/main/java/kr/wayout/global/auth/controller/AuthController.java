@@ -3,9 +3,9 @@ package kr.wayout.global.auth.controller;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.wayout.domain.member.dto.OAuth2UserInfo;
+import kr.wayout.global.auth.OAuth2UserInfo;
 import kr.wayout.global.auth.AuthService;
-import kr.wayout.global.auth.SignOutDto;
+import kr.wayout.global.auth.dto.SignOutDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,8 +23,8 @@ public class AuthController implements AuthApi {
 
     @Override
     @PostMapping("/sign-out")
-    public ResponseEntity<?> signOut(@AuthenticationPrincipal OAuth2UserInfo userInfo, HttpServletResponse response) {
-        authService.signOut(userInfo.getMember().getEmail());
+    public ResponseEntity<?> signOut(@AuthenticationPrincipal String email, HttpServletResponse response) {
+        authService.signOut(email);
 
         // Refresh Token 쿠키 삭제
         Cookie refreshCookie = new Cookie("refreshToken", null);
