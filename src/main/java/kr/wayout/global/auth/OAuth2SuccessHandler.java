@@ -8,6 +8,8 @@ import kr.wayout.domain.member.Member;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import kr.wayout.global.auth.jwt.RefreshTokenStore;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -21,8 +23,12 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final JwtProvider jwtProvider;
     private final RefreshTokenStore refreshTokenStore;
 
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+
         OAuth2UserInfo userInfo = (OAuth2UserInfo) authentication.getPrincipal();
         Member member = userInfo.getMember();
 
@@ -32,18 +38,25 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         refreshTokenStore.save(member.getEmail(), refreshToken);
 
-        Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
-        accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge((int) (jwtProvider.getExpirationTime(accessToken) / 1000));
-        response.addCookie(accessTokenCookie);
+        ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", accessToken)
+                .path("/")
+                .secure(true)
+                .sameSite("Lax")
+                .maxAge((int) jwtProvider.getExpirationTime(accessToken) / 1000)
+                .build();
+        response.addHeader("Set-Cookie", accessTokenCookie.toString());
 
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setMaxAge((int) (jwtProvider.getExpirationTime(refreshToken) / 1000));
-        response.addCookie(refreshTokenCookie);
 
-        String redirectUrl = "/auth/oauth?isNewMember=" + isNewMember;
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
+                .path("/")
+                .secure(true)
+                .sameSite("Lax")
+                .httpOnly(true)
+                .maxAge((int) jwtProvider.getExpirationTime(refreshToken) / 1000)
+                .build();
+
+        String redirectUrl = frontendUrl + "/auth/oauth?isNewMember=" + isNewMember;
+        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
         response.sendRedirect(redirectUrl);
     }
 }
