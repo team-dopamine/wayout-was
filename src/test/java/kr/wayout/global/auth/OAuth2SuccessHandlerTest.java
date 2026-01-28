@@ -20,6 +20,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 
 import java.io.IOException;
+import java.util.Collection;
 
 @ExtendWith(MockitoExtension.class)
 class OAuth2SuccessHandlerTest {
@@ -92,14 +93,23 @@ class OAuth2SuccessHandlerTest {
         BDDMockito.when(authentication.getPrincipal()).thenReturn(userInfo);
         BDDMockito.when(jwtProvider.createAccessToken(member.getEmail(), Role.USER)).thenReturn("access-token");
         BDDMockito.when(jwtProvider.createRefreshToken(member.getEmail(), Role.USER)).thenReturn("refresh-token");
+        BDDMockito.when(jwtProvider.getExpirationTime("access-token")).thenReturn(3600000L);
+        BDDMockito.when(jwtProvider.getExpirationTime("refresh-token")).thenReturn(604800000L);
 
         // when
         oAuth2SuccessHandler.onAuthenticationSuccess(request, response, authentication);
 
         // then
-        Cookie refreshTokenCookie = findCookie(response, "refreshToken");
+        Collection<String> setCookieHeaders = response.getHeaders("Set-Cookie");
+
+        String refreshTokenCookie = setCookieHeaders.stream()
+                .filter(header -> header.startsWith("refreshToken="))
+                .findFirst()
+                .orElse(null);
+
         Assertions.assertThat(refreshTokenCookie).isNotNull();
-        Assertions.assertThat(refreshTokenCookie.isHttpOnly()).isTrue();
+        Assertions.assertThat(refreshTokenCookie).contains("refresh-token");
+        Assertions.assertThat(refreshTokenCookie).contains("HttpOnly");
     }
 
     @Test
