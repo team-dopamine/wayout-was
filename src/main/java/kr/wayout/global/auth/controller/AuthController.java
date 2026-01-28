@@ -28,12 +28,12 @@ public class AuthController implements AuthApi {
     @PostMapping("/sign-out")
     public ResponseEntity<?> signOut(@AuthenticationPrincipal String email, HttpServletResponse response) {
         authService.signOut(email);
-
+        // TODO: Nginx HTTPS 설정 후 secure 부분 주석 해제
         // Refresh Token 쿠키 삭제
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", "")
                 .path("/")
                 .httpOnly(true)
-                .secure(true)
+//                .secure(true)
                 .sameSite("Lax")
                 .maxAge(0)
                 .build();
@@ -42,7 +42,7 @@ public class AuthController implements AuthApi {
         // Access Token 쿠키 삭제
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", "")
                 .path("/")
-                .secure(true)
+//                .secure(true)
                 .sameSite("Lax")
                 .maxAge(0)
                 .build();
@@ -55,10 +55,10 @@ public class AuthController implements AuthApi {
     @PostMapping("/reissue")
     public void reissue(@CookieValue(name = "refreshToken") String refreshToken, HttpServletResponse response) {
         String newAccessToken = authService.reissue(refreshToken);
-
+        // TODO: Nginx HTTPS 설정 후 secure 부분 주석 해제
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", newAccessToken)
                 .path("/")
-                .secure(true)
+//                .secure(true)
                 .sameSite("Lax")
                 .maxAge(jwtProvider.getExpirationTime(newAccessToken) / 1000)
                 .build();

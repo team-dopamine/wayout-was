@@ -38,9 +38,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         refreshTokenStore.save(member.getEmail(), refreshToken);
 
+        // TODO: Nginx HTTPS 설정 후 secure 부분 주석 해제
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", accessToken)
                 .path("/")
-                .secure(true)
+//                .secure(true)
                 .sameSite("Lax")
                 .maxAge((int) jwtProvider.getExpirationTime(accessToken) / 1000)
                 .build();
@@ -49,7 +50,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .path("/")
-                .secure(true)
+//                .secure(true)
                 .sameSite("Lax")
                 .httpOnly(true)
                 .maxAge((int) jwtProvider.getExpirationTime(refreshToken) / 1000)
