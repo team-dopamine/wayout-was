@@ -1,7 +1,6 @@
 package kr.wayout.global.auth;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.wayout.domain.member.Member;
@@ -26,6 +25,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
+    @Value("${app.cookie-domain}")
+    private String domain;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
@@ -38,11 +40,12 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         refreshTokenStore.save(member.getEmail(), refreshToken);
 
-        // TODO: Nginx HTTPS 설정 후 secure 부분 주석 해제
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", accessToken)
                 .path("/")
+                .domain(domain)
 //                .secure(true)
                 .sameSite("Lax")
+                .httpOnly(true)
                 .maxAge((int) jwtProvider.getExpirationTime(accessToken) / 1000)
                 .build();
         response.addHeader("Set-Cookie", accessTokenCookie.toString());
@@ -50,6 +53,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .path("/")
+                .domain(domain)
 //                .secure(true)
                 .sameSite("Lax")
                 .httpOnly(true)
