@@ -33,9 +33,9 @@ public class AuthController implements AuthApi {
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", "")
                 .path("/")
                 .domain(frontendUrl)
-                .httpOnly(true)
-                .secure(true)
+//                .secure(true)
                 .sameSite("Lax")
+                .httpOnly(true)
                 .maxAge(0)
                 .build();
         response.addHeader("Set-Cookie", refreshCookie.toString());
@@ -43,8 +43,9 @@ public class AuthController implements AuthApi {
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", "")
                 .path("/")
                 .domain(frontendUrl)
-                .secure(true)
+//                .secure(true)
                 .sameSite("Lax")
+                .httpOnly(true)
                 .maxAge(0)
                 .build();
         response.addHeader("Set-Cookie", accessCookie.toString());
@@ -60,8 +61,9 @@ public class AuthController implements AuthApi {
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", newAccessToken)
                 .path("/")
                 .domain(frontendUrl)
-                .secure(true)
+//                .secure(true)
                 .sameSite("Lax")
+                .httpOnly(true)
                 .maxAge(jwtProvider.getExpirationTime(newAccessToken) / 1000)
                 .build();
 
