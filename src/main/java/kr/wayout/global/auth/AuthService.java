@@ -41,6 +41,11 @@ public class AuthService {
     @Transactional
     public String withdraw(String email) {
         Member member = memberService.read(email);
+
+        if (member.isDeleted()) {
+            throw new IllegalStateException("이미 삭제 된 사용자입니다.");
+        }
+
         member.delete();
 
         return "탈퇴 처리가 완료되었습니다.";
