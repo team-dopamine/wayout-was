@@ -47,6 +47,7 @@ public class AuthService {
         }
 
         member.delete();
+        refreshTokenStore.delete(email);
 
         return "탈퇴 처리가 완료되었습니다.";
     }

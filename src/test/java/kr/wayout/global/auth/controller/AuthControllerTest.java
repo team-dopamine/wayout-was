@@ -2,6 +2,7 @@ package kr.wayout.global.auth.controller;
 
 import kr.wayout.global.auth.AuthService;
 import kr.wayout.global.auth.jwt.JwtProvider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,11 @@ class AuthControllerTest {
 
     @MockitoBean  // 변경
     private JwtProvider jwtProvider;
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     @DisplayName("회원 탈퇴 API - 성공")
