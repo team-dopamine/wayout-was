@@ -30,7 +30,7 @@ public class MemberService {
 
     @Transactional
     public UpdateNicknameDto.Response changeNickname(String email, UpdateNicknameDto.Request dto) {
-        Member member = findByEmail(email);
+        Member member = read(email);
         // TODO: Custom Exception 도입 후 수정 필요
         String oldNickName = member.getNickname();
         String nickname = dto.getNickname();
@@ -42,7 +42,7 @@ public class MemberService {
         return new UpdateNicknameDto.Response(nickname, message);
     }
 
-    private Member findByEmail(String email) {
+    public Member read(String email) {
         // TODO: 존재하지 않는 이메일에 대한 예외 처리 필요
         return memberRepository.findByEmail(email).get();
     }

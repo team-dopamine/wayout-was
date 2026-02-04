@@ -11,6 +11,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -68,5 +69,11 @@ public class AuthController implements AuthApi {
                 .build();
 
         response.addHeader("Set-Cookie", accessTokenCookie.toString());
+    }
+
+    @Override
+    @DeleteMapping("/withdraw")
+    public ResponseEntity<?> withdraw(@AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(authService.withdraw(email));
     }
 }

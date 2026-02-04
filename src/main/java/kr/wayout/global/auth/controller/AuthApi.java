@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.wayout.global.auth.OAuth2UserInfo;
 import kr.wayout.global.auth.dto.SignOutDto;
 import org.springframework.http.ResponseEntity;
 
@@ -33,4 +32,14 @@ public interface AuthApi {
             @ApiResponse(responseCode = "401", description = "Refresh Token이 유효하지 않음")
     })
     void reissue(String refreshToken, HttpServletResponse response);
+
+    @Operation(
+            summary = "회원 탈퇴 API",
+            description = "사용자의 서비스 탈퇴를 위한 API입니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "탈퇴 처리 완료"),
+            @ApiResponse(responseCode = "401", description = "토큰이 만료되어 이미 로그아웃 된 상태")
+    })
+    ResponseEntity<?> withdraw(String email);
 }
