@@ -3,6 +3,7 @@ package kr.wayout.global.auth;
 import kr.wayout.domain.member.Member;
 import kr.wayout.domain.member.MemberService;
 import kr.wayout.domain.member.Role;
+import kr.wayout.global.auth.dto.SignInDto;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import kr.wayout.global.auth.jwt.RefreshTokenStore;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,11 @@ public class AuthService {
     private final RefreshTokenStore refreshTokenStore;
 
     // TODO: Custom Exception 적용 후 변경 필요
+
+    public SignInDto.CheckResponse check(String email) {
+        Member member = memberService.read(email);
+        return SignInDto.CheckResponse.from(member.getNickname());
+    }
 
     public void signOut(String email) {
         refreshTokenStore.delete(email);

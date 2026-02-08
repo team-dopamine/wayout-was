@@ -1,6 +1,7 @@
 package kr.wayout.global.auth.controller;
 
 import kr.wayout.global.auth.AuthService;
+import kr.wayout.global.auth.dto.SignInDto;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,10 @@ import java.util.Collections;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
@@ -33,9 +37,44 @@ class AuthControllerTest {
     @MockitoBean  // 변경
     private JwtProvider jwtProvider;
 
+    private static final String TEST_EMAIL = "test@gmail.com";
+
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+    }
+
+    private void setAuthentication(String email) {
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    @Test
+    @DisplayName("로그인 확인 API - 로그인 상태")
+    void check_success() throws Exception {
+        // given
+        String nickname = "testUser";
+        setAuthentication(TEST_EMAIL);
+
+        given(authService.check(TEST_EMAIL))
+                .willReturn(SignInDto.CheckResponse.from(nickname));
+
+        // when & then
+        mockMvc.perform(get("/auth/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nickname").value(nickname));
+    }
+
+    @Test
+    @DisplayName("로그인 확인 API - 인증되지 않은 사용자")
+    void check_unauthorized() throws Exception {
+        // given - X
+
+        // when & then
+        mockMvc.perform(get("/auth/me"))
+                .andDo(print())
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
