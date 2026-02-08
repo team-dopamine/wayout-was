@@ -7,11 +7,23 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import kr.wayout.global.auth.dto.SignInDto;
 import kr.wayout.global.auth.dto.SignOutDto;
 import org.springframework.http.ResponseEntity;
 
 @Tag(name = "[인증 관련 API]", description = "사용자 인증 관련 API")
 public interface AuthApi {
+
+    @Operation(summary = "로그인 확인 API", description = "사용자의 로그인 상태를 확인하기 위한 API")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "로그인 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SignInDto.CheckResponse.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "토큰 만료로 인한 로그아웃 상태"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자")
+    })
+    ResponseEntity<?> check(String email);
 
     @Operation(summary = "로그아웃 API", description = "로그인 된 사용자의 로그아웃 처리를 위한 API")
     @ApiResponses({
