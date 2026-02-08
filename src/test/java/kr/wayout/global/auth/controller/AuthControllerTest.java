@@ -1,6 +1,5 @@
 package kr.wayout.global.auth.controller;
 
-import jakarta.servlet.http.Cookie;
 import kr.wayout.global.auth.AuthService;
 import kr.wayout.global.auth.dto.SignInDto;
 import kr.wayout.global.auth.jwt.JwtProvider;
@@ -21,7 +20,9 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
