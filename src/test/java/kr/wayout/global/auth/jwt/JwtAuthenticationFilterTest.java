@@ -2,7 +2,9 @@ package kr.wayout.global.auth.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import kr.wayout.domain.member.Role;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,8 +15,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import org.assertj.core.api.Assertions;
 
 import java.io.IOException;
 
@@ -47,7 +47,7 @@ class JwtAuthenticationFilterTest {
         String token = jwtProvider.createAccessToken(email, role);
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("Authorization", "Bearer " + token);
+        request.setCookies(new Cookie("accessToken", token));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         // when
@@ -82,7 +82,7 @@ class JwtAuthenticationFilterTest {
     void 유효하지_않은_토큰_검증() throws ServletException, IOException {
         // given
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("Authorization", "Bearer invalid-token");
+        request.setCookies(new Cookie("accessToken", "invalid-token"));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         // when
