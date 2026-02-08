@@ -2,6 +2,7 @@ package kr.wayout.global.auth.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.wayout.domain.member.Role;
@@ -42,10 +43,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     public String resolveToken(HttpServletRequest request) {
-        String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            return token.substring(7);  // "Bearer " 제거
+        Cookie[] cookies = request.getCookies();
+
+        if (cookies == null) {
+            return null;
         }
+
+        for (Cookie cookie : cookies) {
+            if ("accessToken".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+
         return null;
     }
 }

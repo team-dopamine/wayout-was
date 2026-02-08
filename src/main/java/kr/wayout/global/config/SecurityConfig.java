@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
                         // TODO: 추후 회원 기능이 구현 될 경우, 해당 경로에 대해서 인증 설정
-                        // .requestMatchers("/api/members/**").authenticated()
+                         .requestMatchers("/api/auth/**").authenticated()
                         // 우선적으로는 모두 허용
                         .anyRequest().permitAll()
                 )
