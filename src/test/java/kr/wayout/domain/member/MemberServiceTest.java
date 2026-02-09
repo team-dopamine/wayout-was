@@ -8,15 +8,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.BDDMockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.awaitility.Awaitility.given;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -39,7 +37,7 @@ class MemberServiceTest {
                 .role(Role.USER)
                 .build();
 
-        BDDMockito.given(memberRepository.findByEmail(email)).willReturn(Optional.of(newMember));
+        BDDMockito.given(memberRepository.findByEmailIncludingDeleted(email)).willReturn(Optional.of(newMember));
 
         // when
         Member result = memberService.readOrCreate(email);
@@ -61,7 +59,7 @@ class MemberServiceTest {
                 .role(Role.USER)
                 .build();
 
-        BDDMockito.given(memberRepository.findByEmail(email)).willReturn(Optional.empty());
+        BDDMockito.given(memberRepository.findByEmailIncludingDeleted(email)).willReturn(Optional.empty());
         BDDMockito.given(memberRepository.save(any(Member.class))).willReturn(newMember);
 
         // when
