@@ -25,14 +25,14 @@ public class BaseEntity {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP")
-    private LocalDateTime createdAt;
+    protected LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP")
-    private LocalDateTime updatedAt;
+    protected LocalDateTime updatedAt;
 
     @Column(name = "deleted_at", columnDefinition = "TIMESTAMP")
-    private LocalDateTime deletedAt;
+    protected LocalDateTime deletedAt;
 
     public void delete() {
         this.deletedAt = LocalDateTime.now();
