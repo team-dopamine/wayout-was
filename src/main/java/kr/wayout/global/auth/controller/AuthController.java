@@ -25,6 +25,7 @@ public class AuthController implements AuthApi {
 
     private final AuthService authService;
     private final JwtProvider jwtProvider;
+    private final String JSESSIONID_DOMAIN = "wayout.kr";
 
     @Value("${app.cookie-domain}")
     private String frontendUrl;
@@ -61,6 +62,14 @@ public class AuthController implements AuthApi {
                 .maxAge(0)
                 .build();
         response.addHeader("Set-Cookie", accessCookie.toString());
+
+        ResponseCookie sessionCookie = ResponseCookie.from("JSESSIONID", "")
+                .path("/api")
+                .domain(JSESSIONID_DOMAIN)
+                .httpOnly(true)
+                .maxAge(0)
+                .build();
+        response.addHeader("Set-Cookie", sessionCookie.toString());
 
         return ResponseEntity.ok(new SignOutDto.Response("로그아웃에 성공하였습니다."));
     }
