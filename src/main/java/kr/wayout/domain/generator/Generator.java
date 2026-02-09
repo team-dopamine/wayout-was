@@ -5,13 +5,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import kr.wayout.domain.problem.Problem;
 import kr.wayout.domain.member.Member;
+import kr.wayout.domain.problem.Problem;
 import kr.wayout.global.common.BaseEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
+@SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Generator extends BaseEntity {
 

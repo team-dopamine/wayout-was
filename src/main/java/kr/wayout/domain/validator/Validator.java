@@ -9,8 +9,10 @@ import kr.wayout.domain.problem.Problem;
 import kr.wayout.global.common.BaseEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
+@SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Validator extends BaseEntity {
 
