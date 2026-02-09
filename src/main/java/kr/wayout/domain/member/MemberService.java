@@ -3,6 +3,7 @@ package kr.wayout.domain.member;
 import kr.wayout.domain.member.dto.UpdateNicknameDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,15 +19,34 @@ public class MemberService {
     @Transactional
     public Member readOrCreate(String email) {
         // TODO: 동시성 처리에 대한 예외 처리 필요
-        return memberRepository.findByEmail(email)
-                .orElseGet(() -> memberRepository.save(
-                        Member.builder()
-                                .email(email)
-                                .nickname(generateTemporaryNickname())
-                                .role(Role.USER)
-                                .build()
-                ));
+        return memberRepository.findByEmailIncludingDeleted(email)
+                .map(this::handleExisting)
+                .orElseGet(() -> create(email));
     }
+
+    private Member create(String email) {
+        return memberRepository.save(
+                Member.builder()
+                        .email(email)
+                        .nickname(generateTemporaryNickname())
+                        .role(Role.USER)
+                        .build()
+        );
+    }
+
+    private Member handleExisting(Member member) {
+        if (!member.isDeleted()) {
+            return member;
+        }
+
+        if (member.isRestoreable()) {
+            member.restore();
+            return member;
+        }
+
+        throw new OAuth2AuthenticationException("탈퇴 후 30일이 경과하여 복구할 수 없습니다.");
+    }
+
 
     @Transactional
     public UpdateNicknameDto.Response changeNickname(String email, UpdateNicknameDto.Request dto) {
