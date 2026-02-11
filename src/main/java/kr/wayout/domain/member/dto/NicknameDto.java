@@ -39,7 +39,7 @@ public class NicknameDto {
 
     @Getter
     @AllArgsConstructor
-    @Schema(name = "NicknameDto.ReadRespone", description = "닉네임 조회 응답 DTO")
+    @Schema(name = "NicknameDto.ReadResponse", description = "닉네임 조회 응답 DTO")
     public static class ReadResponse {
 
         private String nickname;
