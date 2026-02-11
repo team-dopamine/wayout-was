@@ -20,7 +20,7 @@ public class MemberController implements MemberApi {
     private final MemberService memberService;
 
     @Override
-    @PatchMapping("/me")
+    @PatchMapping("/me/nickname")
     public ResponseEntity<?> update(@AuthenticationPrincipal String email, @Valid @RequestBody NicknameDto.UpdateRequest dto) {
         return ResponseEntity.ok(memberService.changeNickname(email, dto));
     }
@@ -29,5 +29,11 @@ public class MemberController implements MemberApi {
     @GetMapping("/me/nickname")
     public ResponseEntity<?> getNickname(@AuthenticationPrincipal String email) {
         return ResponseEntity.ok(memberService.getNickname(email));
+    }
+
+    @Override
+    @GetMapping("/me")
+    public ResponseEntity<?> getMember(@AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(memberService.getMember(email));
     }
 }

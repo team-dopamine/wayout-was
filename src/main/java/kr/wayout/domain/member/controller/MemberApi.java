@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.wayout.domain.member.dto.MemberDto;
 import kr.wayout.domain.member.dto.NicknameDto;
 import org.springframework.http.ResponseEntity;
 
@@ -31,4 +32,14 @@ public interface MemberApi {
             @ApiResponse(responseCode = "401", description = "토큰 만료로 인한 인증 실패")
     })
     ResponseEntity<?> getNickname(String email);
+
+    @Operation(summary = "사용자 정보 조회 API", description = "사용자의 정보를 조회하기 위한 API")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "사용자 정보 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = MemberDto.Info.class))),
+            @ApiResponse(responseCode = "400", description = "사용자 정보 조회 실패"),
+            @ApiResponse(responseCode = "401", description = "토큰 만료로 인한 인증 실패")
+    })
+    ResponseEntity<?> getMember(String email);
 }

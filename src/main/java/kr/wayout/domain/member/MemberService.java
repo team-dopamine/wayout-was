@@ -1,5 +1,6 @@
 package kr.wayout.domain.member;
 
+import kr.wayout.domain.member.dto.MemberDto;
 import kr.wayout.domain.member.dto.NicknameDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,11 @@ public class MemberService {
     public NicknameDto.ReadResponse getNickname(String email) {
         Member member = read(email);
         return NicknameDto.ReadResponse.of(member.getNickname());
+    }
+
+    public MemberDto.Info getMember(String email) {
+        Member member = read(email);
+        return MemberDto.Info.from(member);
     }
 
     private Member handleExisting(Member member) {

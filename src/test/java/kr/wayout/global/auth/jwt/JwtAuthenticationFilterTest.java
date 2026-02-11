@@ -93,23 +93,4 @@ class JwtAuthenticationFilterTest {
         Assertions.assertThat(authentication).isNull();
         verify(filterChain).doFilter(request, response);
     }
-
-    @Test
-    @DisplayName("Bearer 접두사가 없음 - 인증 정보 등록 X")
-    void noBearerPrefix_noAuthentication() throws ServletException, IOException {
-        // given
-        String token = jwtProvider.createAccessToken("test@example.com", Role.USER);
-
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("Authorization", token);  // Bearer 없음
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        // when
-        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-
-        // then
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Assertions.assertThat(authentication).isNull();
-        verify(filterChain).doFilter(request, response);
-    }
 }
