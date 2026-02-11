@@ -3,7 +3,6 @@ package kr.wayout.global.auth.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
 import kr.wayout.global.auth.AuthService;
-import kr.wayout.global.auth.dto.SignOutDto;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,40 +38,6 @@ public class AuthController implements AuthApi {
         return ResponseEntity.ok(authService.check(email));
     }
 
-    @Override
-    @PostMapping("/sign-out")
-    public ResponseEntity<?> signOut(@AuthenticationPrincipal String email, HttpServletResponse response) {
-        authService.signOut(email);
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", "")
-                .path("/")
-                .domain(frontendUrl)
-//                .secure(true)
-                .sameSite("Lax")
-                .httpOnly(true)
-                .maxAge(0)
-                .build();
-        response.addHeader("Set-Cookie", refreshCookie.toString());
-
-        ResponseCookie accessCookie = ResponseCookie.from("accessToken", "")
-                .path("/")
-                .domain(frontendUrl)
-//                .secure(true)
-                .sameSite("Lax")
-                .httpOnly(true)
-                .maxAge(0)
-                .build();
-        response.addHeader("Set-Cookie", accessCookie.toString());
-
-        ResponseCookie sessionCookie = ResponseCookie.from("JSESSIONID", "")
-                .path("/api")
-                .domain(JSESSIONID_DOMAIN)
-                .httpOnly(true)
-                .maxAge(0)
-                .build();
-        response.addHeader("Set-Cookie", sessionCookie.toString());
-
-        return ResponseEntity.ok(new SignOutDto.Response("로그아웃에 성공하였습니다."));
-    }
 
     @Override
     @PostMapping("/reissue")
