@@ -1,6 +1,6 @@
 package kr.wayout.domain.member;
 
-import kr.wayout.domain.member.dto.UpdateNicknameDto;
+import kr.wayout.domain.member.dto.NicknameDto;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -83,16 +84,51 @@ class MemberServiceTest {
                 .role(Role.USER)
                 .build();
 
-        UpdateNicknameDto.Request request = new UpdateNicknameDto.Request(newNickname);
+        NicknameDto.UpdateRequest request = new NicknameDto.UpdateRequest(newNickname);
 
         BDDMockito.given(memberRepository.findByEmail(email)).willReturn(Optional.of(member));
 
         // when
-        UpdateNicknameDto.Response response = memberService.changeNickname(email, request);
+        NicknameDto.UpdateResponse response = memberService.changeNickname(email, request);
 
         // then
         Assertions.assertThat(member.getNickname()).isEqualTo(newNickname);
         Assertions.assertThat(response.getNickname()).isEqualTo(newNickname);
+    }
+
+    @Test
+    @DisplayName("닉네임 조회 실패 - 사용자 존재하지 않음")
+    void getNickname_not_found_member() {
+        // given
+        String email = "example4@gmail.com";
+        String nickname = "Jsplix";
+
+        Member member = Member.builder()
+                .email(email)
+                .nickname(nickname)
+                .role(Role.USER)
+                .build();
+
+        BDDMockito.given(memberRepository.findByEmail(email)).willReturn(Optional.of(member));
+
+        // when
+        NicknameDto.ReadResponse response = memberService.getNickname(email);
+
+        // then
+        Assertions.assertThat(response.getNickname()).isEqualTo(nickname);
+    }
+
+    @Test
+    @DisplayName("닉네임 조회 실패 - 없는 사용자")
+    void getNickname_success() {
+        // given
+        String email = "example5@gmail.com";
+        BDDMockito.given(memberRepository.findByEmail(email))
+                .willReturn(Optional.empty());
+
+        // when / then
+        Assertions.assertThatThrownBy(() -> memberService.getNickname(email))
+                .isInstanceOf(NoSuchElementException.class);
     }
 
 }

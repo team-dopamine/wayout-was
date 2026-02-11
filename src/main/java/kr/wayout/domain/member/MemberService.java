@@ -1,6 +1,6 @@
 package kr.wayout.domain.member;
 
-import kr.wayout.domain.member.dto.UpdateNicknameDto;
+import kr.wayout.domain.member.dto.NicknameDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -34,6 +34,11 @@ public class MemberService {
         );
     }
 
+    public NicknameDto.ReadResponse getNickname(String email) {
+        Member member = read(email);
+        return NicknameDto.ReadResponse.of(member.getNickname());
+    }
+
     private Member handleExisting(Member member) {
         if (!member.isDeleted()) {
             return member;
@@ -49,7 +54,7 @@ public class MemberService {
 
 
     @Transactional
-    public UpdateNicknameDto.Response changeNickname(String email, UpdateNicknameDto.Request dto) {
+    public NicknameDto.UpdateResponse changeNickname(String email, NicknameDto.UpdateRequest dto) {
         Member member = read(email);
         // TODO: Custom Exception 도입 후 수정 필요
         String oldNickName = member.getNickname();
@@ -59,7 +64,7 @@ public class MemberService {
 
         String message = "닉네임 변경에 성공하였습니다.";
         log.info("사용자({})의 닉네임이 (전: {})에서 (후: {})로 변경되었습니다.", email, oldNickName, nickname);
-        return new UpdateNicknameDto.Response(nickname, message);
+        return new NicknameDto.UpdateResponse(nickname, message);
     }
 
     public Member read(String email) {

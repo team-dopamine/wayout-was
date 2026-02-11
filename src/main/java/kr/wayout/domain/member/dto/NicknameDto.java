@@ -8,13 +8,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-public class UpdateNicknameDto {
+public class NicknameDto {
 
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(name = "UpdateNicknameDto.Request", description = "닉네임 변경 요청 DTO")
-    public static class Request {
+    @Schema(name = "NicknameDto.UpdateRequest", description = "닉네임 변경 요청 DTO")
+    public static class UpdateRequest {
 
         @NotBlank(message = "닉네임은 필수입니다.")
         @Size(min = 2, max = 12, message = "닉네임은 2~12자여야 합니다")
@@ -25,16 +25,28 @@ public class UpdateNicknameDto {
 
     @Getter
     @AllArgsConstructor
-    @Schema(name = "UpdateNicknameDto.Response", description = "닉네임 변경 응답 DTO")
-    public static class Response {
+    @Schema(name = "NicknameDto.UpdateResponse", description = "닉네임 변경 응답 DTO")
+    public static class UpdateResponse {
 
         private String nickname;
         private String message;
 
-        public static Response of(String nickname, String message) {
-            return new Response(nickname, message);
+        public static UpdateResponse of(String nickname, String message) {
+            return new UpdateResponse(nickname, message);
         }
 
     }
 
+    @Getter
+    @AllArgsConstructor
+    @Schema(name = "NicknameDto.ReadRespone", description = "닉네임 조회 응답 DTO")
+    public static class ReadResponse {
+
+        private String nickname;
+
+        public static ReadResponse of(String nickname) {
+            return new ReadResponse(nickname);
+        }
+
+    }
 }
