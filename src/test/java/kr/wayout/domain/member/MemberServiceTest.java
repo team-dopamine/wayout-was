@@ -1,5 +1,6 @@
 package kr.wayout.domain.member;
 
+import kr.wayout.domain.member.dto.MemberDto;
 import kr.wayout.domain.member.dto.NicknameDto;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -131,4 +132,27 @@ class MemberServiceTest {
                 .isInstanceOf(NoSuchElementException.class);
     }
 
+    @Test
+    @DisplayName("정보 조회 API - 성공")
+    void getMember_success() {
+        // given
+        String email = "example6@gmail.com";
+        String nickname = "Jsplix";
+
+        Member member = Member.builder()
+                .email(email)
+                .nickname(nickname)
+                .role(Role.USER)
+                .build();
+
+        BDDMockito.given(memberRepository.findByEmail(email)).willReturn(Optional.of(member));
+
+        // when
+        MemberDto.Info response = memberService.getMember(email);
+
+        // then
+        Assertions.assertThat(response.getEmail()).isEqualTo(email);
+        Assertions.assertThat(response.getNickname()).isEqualTo(nickname);
+
+    }
 }
