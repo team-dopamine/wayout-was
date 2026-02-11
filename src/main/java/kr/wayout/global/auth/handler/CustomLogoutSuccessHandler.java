@@ -20,7 +20,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
     private final AuthService authService;
 
     @Value("${app.cookie-domain}")
-    private String frontendUrl;
+    private String cookieDomain;
 
     @Override
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -32,7 +32,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
 
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", "")
                 .path("/")
-                .domain(frontendUrl)
+                .domain(cookieDomain)
 //                .secure(true)
                 .sameSite("Lax")
                 .httpOnly(true)
@@ -41,7 +41,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", "")
                 .path("/")
-                .domain(frontendUrl)
+                .domain(cookieDomain)
 //                .secure(true)
                 .sameSite("Lax")
                 .httpOnly(true)
