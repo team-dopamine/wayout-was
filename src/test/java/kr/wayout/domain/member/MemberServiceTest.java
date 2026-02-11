@@ -97,8 +97,8 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("닉네임 조회 실패 - 사용자 존재하지 않음")
-    void getNickname_not_found_member() {
+    @DisplayName("닉네임 조회 성공")
+    void getNickname_success() {
         // given
         String email = "example4@gmail.com";
         String nickname = "Jsplix";
@@ -120,7 +120,7 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("닉네임 조회 실패 - 없는 사용자")
-    void getNickname_success() {
+    void getNickname_not_found_member() {
         // given
         String email = "example5@gmail.com";
         BDDMockito.given(memberRepository.findByEmail(email))

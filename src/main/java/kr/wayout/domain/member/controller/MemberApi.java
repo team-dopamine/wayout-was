@@ -24,10 +24,10 @@ public interface MemberApi {
 
     @Operation(summary = "닉네임 조회 API", description = "사용자의 닉네임을 조회하기 위한 API")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "닉네임 변경 성공",
+            @ApiResponse(responseCode = "200", description = "닉네임 조회 성공",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = NicknameDto.UpdateResponse.class))),
-            @ApiResponse(responseCode = "400", description = "닉네임 변경 실패"),
+                            schema = @Schema(implementation = NicknameDto.ReadResponse.class))),
+            @ApiResponse(responseCode = "400", description = "닉네임 조회 실패"),
             @ApiResponse(responseCode = "401", description = "토큰 만료로 인한 인증 실패")
     })
     ResponseEntity<?> getNickname(String email);
