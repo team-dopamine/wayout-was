@@ -1,5 +1,6 @@
 package kr.wayout.global.config;
 
+import jakarta.servlet.http.Cookie;
 import kr.wayout.global.auth.CustomOAuth2UserService;
 import kr.wayout.global.auth.handler.CustomLogoutSuccessHandler;
 import kr.wayout.global.auth.handler.OAuth2SuccessHandler;
@@ -29,6 +30,9 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
 
+    @Value("${app.cookie-domain}")
+    private String cookieDomain;
+
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
@@ -57,12 +61,21 @@ public class SecurityConfig {
                         .failureUrl("/auth/error")
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/auth/sign-out")
-                        .logoutSuccessHandler(customLogoutSuccessHandler)
-                        .invalidateHttpSession(true)
-                        .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID")
+                                .logoutUrl("/auth/sign-out")
+                                .addLogoutHandler((request, response, authentication) -> {
+
+                                    Cookie cookie = new Cookie("JSESSIONID", null);
+                                    cookie.setMaxAge(0);
+                                    cookie.setDomain(cookieDomain);
+                                    cookie.setPath("/api");
+                                    cookie.setHttpOnly(true);
+//                            cookie.setSecure(true);
+
+                                    response.addCookie(cookie);
+                                })
+                                .logoutSuccessHandler(customLogoutSuccessHandler)
                 )
+
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
 
