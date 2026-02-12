@@ -4,6 +4,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import kr.wayout.domain.member.Member;
 import kr.wayout.domain.member.Role;
+import kr.wayout.global.auth.handler.OAuth2SuccessHandler;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import kr.wayout.global.auth.jwt.RefreshTokenStore;
 import org.assertj.core.api.Assertions;
