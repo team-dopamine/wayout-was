@@ -28,7 +28,14 @@ public class SolutionService {
                 .map(solution -> solution.getVersion() + 1)
                 .orElse(1);
 
-        Solution solution = Solution.create(member, problem, nextVersion, dto.getSourceCode(), dto.getLanguage());
+        Solution solution = Solution.create(
+                member,
+                problem,
+                nextVersion,
+                dto.getSourceCode(),
+                dto.getLanguage(),
+                dto.getIsOpen()
+        );
         solutionRepository.save(solution);
 
         return SolutionDto.CreateResponse.of("정답 코드 등록에 성공했습니다.");

@@ -42,7 +42,7 @@ class SolutionServiceTest {
     void create_firstVersion_success() {
         // given
         String email = "test@gmail.com";
-        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, "public class Main {}");
+        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, true, "public class Main {}");
         Member member = Mockito.mock(Member.class);
         Problem problem = Mockito.mock(Problem.class);
         Solution saved = Mockito.mock(Solution.class);
@@ -65,7 +65,7 @@ class SolutionServiceTest {
         // given
         String email = "test@gmail.com";
 
-        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, "public class Main {}");
+        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, true, "public class Main {}");
         Member member = Mockito.mock(Member.class);
         Problem problem = Mockito.mock(Problem.class);
         Solution lastSolution = Mockito.mock(Solution.class);
@@ -85,6 +85,7 @@ class SolutionServiceTest {
         verify(solutionRepository).save(captor.capture());
         Assertions.assertThat(captor.getValue().getVersion()).isEqualTo(4);
         Assertions.assertThat(captor.getValue().getLanguage()).isEqualTo(Language.JAVA);
+        Assertions.assertThat(captor.getValue().getIsOpen()).isTrue();
         Assertions.assertThat(response.getMessage()).isEqualTo("정답 코드 등록에 성공했습니다.");
     }
 }

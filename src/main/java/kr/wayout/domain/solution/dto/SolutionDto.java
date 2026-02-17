@@ -17,7 +17,11 @@ public class SolutionDto {
         @NotNull
         private Long problemId;
 
+        @NotNull
         private Language language;
+
+        @NotNull
+        private Boolean isOpen;
 
         @NotBlank
         private String sourceCode;

@@ -60,7 +60,7 @@ class SolutionControllerTest {
         String email = "test@gmail.com";
         setAuthentication(email);
 
-        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, "public class Main {}");
+        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, true, "public class Main {}");
         SolutionDto.CreateResponse response = SolutionDto.CreateResponse.of("정답 코드 등록에 성공했습니다.");
 
         given(solutionService.create(eq(email), any(SolutionDto.CreateRequest.class)))
@@ -78,7 +78,7 @@ class SolutionControllerTest {
     @DisplayName("정답 코드 등록 API - 인증되지 않은 사용자")
     void create_unauthorized() throws Exception {
         // given
-        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, "public class Main {}");
+        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, true, "public class Main {}");
 
         // when & then
         mockMvc.perform(post("/solutions")

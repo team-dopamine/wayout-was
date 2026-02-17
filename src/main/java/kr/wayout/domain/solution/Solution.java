@@ -41,22 +41,28 @@ public class Solution extends BaseEntity {
     @Column(name = "language", nullable = false, updatable = false)
     private Language language;
 
+    @Column(name = "is_public", nullable = false)
+    private Boolean isOpen;
+
     @Builder
-    public Solution(Member member, Problem problem, Integer version, String sourceCode, Language language) {
+    public Solution(Member member, Problem problem, Integer version, String sourceCode, Language language, Boolean isOpen) {
         this.member = member;
         this.problem = problem;
         this.version = version;
         this.sourceCode = sourceCode;
         this.language = language;
+        this.isOpen = isOpen;
     }
 
-    public static Solution create(Member member, Problem problem, Integer version, String sourceCode, Language language) {
+    public static Solution create(Member member, Problem problem, Integer version, String sourceCode,
+                                  Language language, Boolean isOpen) {
         return Solution.builder()
                 .member(member)
                 .problem(problem)
                 .version(version)
                 .sourceCode(sourceCode)
                 .language(language)
+                .isOpen(isOpen)
                 .build();
     }
 
