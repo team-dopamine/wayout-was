@@ -3,6 +3,7 @@ package kr.wayout.domain.solution.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.wayout.domain.solution.SolutionService;
 import kr.wayout.domain.solution.dto.SolutionDto;
+import kr.wayout.domain.submission.Language;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -59,7 +60,7 @@ class SolutionControllerTest {
         String email = "test@gmail.com";
         setAuthentication(email);
 
-        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, "public class Main {}");
+        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, "public class Main {}");
         SolutionDto.CreateResponse response = SolutionDto.CreateResponse.of("정답 코드 등록에 성공했습니다.");
 
         given(solutionService.create(eq(email), any(SolutionDto.CreateRequest.class)))
@@ -77,7 +78,7 @@ class SolutionControllerTest {
     @DisplayName("정답 코드 등록 API - 인증되지 않은 사용자")
     void create_unauthorized() throws Exception {
         // given
-        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, "public class Main {}");
+        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, "public class Main {}");
 
         // when & then
         mockMvc.perform(post("/solutions")

@@ -5,6 +5,7 @@ import kr.wayout.domain.member.MemberService;
 import kr.wayout.domain.problem.Problem;
 import kr.wayout.domain.problem.ProblemRepository;
 import kr.wayout.domain.solution.dto.SolutionDto;
+import kr.wayout.domain.submission.Language;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,7 @@ class SolutionServiceTest {
     void create_firstVersion_success() {
         // given
         String email = "test@gmail.com";
-        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, "public class Main {}");
+        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, "public class Main {}");
         Member member = Mockito.mock(Member.class);
         Problem problem = Mockito.mock(Problem.class);
         Solution saved = Mockito.mock(Solution.class);
@@ -64,7 +65,7 @@ class SolutionServiceTest {
         // given
         String email = "test@gmail.com";
 
-        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, "public class Main {}");
+        SolutionDto.CreateRequest request = new SolutionDto.CreateRequest(1L, Language.JAVA, "public class Main {}");
         Member member = Mockito.mock(Member.class);
         Problem problem = Mockito.mock(Problem.class);
         Solution lastSolution = Mockito.mock(Solution.class);
@@ -83,6 +84,7 @@ class SolutionServiceTest {
         ArgumentCaptor<Solution> captor = ArgumentCaptor.forClass(Solution.class);
         verify(solutionRepository).save(captor.capture());
         Assertions.assertThat(captor.getValue().getVersion()).isEqualTo(4);
+        Assertions.assertThat(captor.getValue().getLanguage()).isEqualTo(Language.JAVA);
         Assertions.assertThat(response.getMessage()).isEqualTo("정답 코드 등록에 성공했습니다.");
     }
 }

@@ -2,6 +2,7 @@ package kr.wayout.domain.solution.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import kr.wayout.domain.submission.Language;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +16,8 @@ public class SolutionDto {
     public static class CreateRequest {
         @NotNull
         private Long problemId;
+
+        private Language language;
 
         @NotBlank
         private String sourceCode;
