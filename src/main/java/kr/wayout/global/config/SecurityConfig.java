@@ -49,6 +49,7 @@ public class SecurityConfig {
                         // TODO: 추후 회원 기능이 구현 될 경우, 해당 경로에 대해서 인증 설정
                         .requestMatchers("/api/auth/me", "/api/auth/sign-out", "/api/auth/withdraw").authenticated()
                         .requestMatchers("/api/members/me", "/api/members/me/nickname").authenticated()
+                        .requestMatchers("/solutions").authenticated()
                         // 우선적으로는 모두 허용
                         .anyRequest().permitAll()
                 )

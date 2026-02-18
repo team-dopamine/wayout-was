@@ -74,8 +74,8 @@ public class MemberService {
     }
 
     public Member read(String email) {
-        // TODO: 존재하지 않는 이메일에 대한 예외 처리 필요
-        return memberRepository.findByEmail(email).get();
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
     }
 
     private String generateTemporaryNickname() {
