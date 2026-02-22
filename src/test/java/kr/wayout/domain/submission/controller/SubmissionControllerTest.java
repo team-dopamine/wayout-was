@@ -13,8 +13,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.UUID;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
@@ -46,9 +44,7 @@ class SubmissionControllerTest {
         SubmissionDto.CreateCounterExampleRequest request =
                 new SubmissionDto.CreateCounterExampleRequest(1L, Language.JAVA, "public class Main {}");
         SubmissionDto.CreateCounterExampleResponse response = SubmissionDto.CreateCounterExampleResponse.builder()
-                .requestId(UUID.randomUUID())
                 .status("PENDING")
-                .submitter("anonymousUser")
                 .message("반례 탐색 요청이 접수되었습니다.")
                 .build();
 
