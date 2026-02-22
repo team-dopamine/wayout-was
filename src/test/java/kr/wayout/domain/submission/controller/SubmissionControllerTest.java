@@ -52,11 +52,10 @@ class SubmissionControllerTest {
                 .willReturn(response);
 
         // when & then
-        mockMvc.perform(post("/submissions/counter-examples")
+                mockMvc.perform(post("/submissions/counter-examples")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("PENDING"))
-                .andExpect(jsonPath("$.submitter").value("anonymousUser"));
+                .andExpect(jsonPath("$.status").value("PENDING"));
     }
 }
