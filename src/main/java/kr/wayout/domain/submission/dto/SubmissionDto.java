@@ -23,6 +23,9 @@ public class SubmissionDto {
 
         @NotBlank
         private String sourceCode;
+
+        @NotNull
+        private Boolean isOpen;
     }
 
     @Getter
