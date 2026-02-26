@@ -6,7 +6,6 @@ import kr.wayout.domain.generator.GeneratorRepository;
 import kr.wayout.domain.problem.Problem;
 import kr.wayout.domain.problem.ProblemRepository;
 import kr.wayout.domain.submission.Language;
-import kr.wayout.domain.submission.runner.CounterExampleRunCommand;
 import kr.wayout.domain.submission.runner.CounterExampleRunResult;
 import kr.wayout.domain.submission.runner.CounterExampleRunner;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +21,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -35,14 +35,15 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
     private static final int GROUP3_CASES = 30;
     private static final int TARGET_PER_GROUP_DIVISOR = 5; // 20%
     private static final String TESTLIB_HEADER = "testlib.h";
+    private static final int DOCKER_TIMEOUT_SECONDS = 60;
 
     private final ProblemRepository problemRepository;
     private final GeneratorRepository generatorRepository;
 
     @Override
-    public CounterExampleRunResult run(CounterExampleRunCommand command) {
+    public CounterExampleRunResult run(Long problemId) {
         long startedAt = System.nanoTime();
-        Problem problem = problemRepository.findById(command.getProblemId())
+        Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 문제입니다."));
         Generator generator = generatorRepository.findGeneratorByProblem(problem);
         if (generator == null) {
@@ -167,7 +168,13 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
             Process process = new ProcessBuilder(command).start();
             process.getInputStream().readAllBytes(); // drain stdout to avoid blocking
             String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-            int exitCode = process.waitFor();
+            boolean isFinished = process.waitFor(DOCKER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!isFinished) {
+                process.destroyForcibly();
+                throw new IllegalStateException("Docker 실행시간이 초과되었습니다.");
+            }
+
+            int exitCode = process.exitValue();
             if (exitCode != 0) {
                 log.error("Docker run failed. role={}, exitCode={}, stderr={}", role, exitCode, stderr);
                 throw new IllegalStateException("Docker 실행에 실패했습니다. stderr=" + stderr);
@@ -231,7 +238,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
         builder.append("mkdir -p outputs\n");
         for (int i = 0; i < seedArgs.size(); i++) {
             builder.append("./main ")
-                    .append(seedArgs.get(i))
+                    .append(escapeShellArg(seedArgs.get(i)))
                     .append(" < \"inputs/input_")
                     .append(i)
                     .append(".txt\" > \"outputs/case_")
@@ -256,6 +263,13 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
         } catch (NumberFormatException e) {
             return String.valueOf(fallbackIndex);
         }
+    }
+
+    private String escapeShellArg(String arg) {
+        if (arg != null && arg.matches("^-?\\d+$")) {
+            return arg;
+        }
+        throw new IllegalArgumentException("Invalid seed argument: " + arg);
     }
 
 }

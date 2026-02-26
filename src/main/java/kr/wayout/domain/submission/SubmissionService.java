@@ -3,7 +3,6 @@ package kr.wayout.domain.submission;
 import kr.wayout.domain.member.Member;
 import kr.wayout.domain.member.MemberService;
 import kr.wayout.domain.submission.dto.SubmissionDto;
-import kr.wayout.domain.submission.runner.CounterExampleRunCommand;
 import kr.wayout.domain.submission.runner.CounterExampleRunResult;
 import kr.wayout.domain.submission.runner.CounterExampleRunner;
 import lombok.RequiredArgsConstructor;
@@ -26,14 +25,7 @@ public class SubmissionService {
 
         // TODO: 다음 단계에서 아래 로직을 순서대로 구현
         // 1) runner에서 problem/generator/validator/solution 조회 및 실행
-        CounterExampleRunResult result = counterExampleRunner.run(
-                CounterExampleRunCommand.builder()
-                        .problemId(dto.getProblemId())
-                        .userSourceCode(dto.getSourceCode())
-                        .userLanguage(dto.getLanguage())
-                        .maxTrials(100)
-                        .build()
-        );
+        CounterExampleRunResult result = counterExampleRunner.run(dto.getProblemId());
         // 2) submission 저장
         // 3) docker 실행
         // 4) 결과 저장 및 응답 구성
