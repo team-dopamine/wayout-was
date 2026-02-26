@@ -9,10 +9,12 @@ import kr.wayout.domain.member.Member;
 import kr.wayout.domain.problem.Problem;
 import kr.wayout.global.common.BaseEntity;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 
 @Entity
+@Getter
 @SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Generator extends BaseEntity {
