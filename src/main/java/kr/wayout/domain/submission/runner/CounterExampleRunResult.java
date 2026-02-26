@@ -15,5 +15,6 @@ public class CounterExampleRunResult {
     private Double executionTime;
     private String message;
     private List<String> generatedInputs;
+    private List<Boolean> validationResults;
     private String outputFilePath;
 }
