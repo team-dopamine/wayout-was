@@ -10,4 +10,6 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
 
     Page<Problem> findAll(Pageable pageable);
 
+    Problem findProblemById(Long id);
+
 }
