@@ -42,7 +42,7 @@ class SubmissionControllerTest {
     void createCounterExample_success_for_anonymous() throws Exception {
         // given
         SubmissionDto.CreateCounterExampleRequest request =
-                new SubmissionDto.CreateCounterExampleRequest(1L, Language.JAVA, "public class Main {}");
+                new SubmissionDto.CreateCounterExampleRequest(1L, Language.JAVA, "public class Main {}", true);
         SubmissionDto.CreateCounterExampleResponse response = SubmissionDto.CreateCounterExampleResponse.builder()
                 .status("PENDING")
                 .message("반례 탐색 요청이 접수되었습니다.")
