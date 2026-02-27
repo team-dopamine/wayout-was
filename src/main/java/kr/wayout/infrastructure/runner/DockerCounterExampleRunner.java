@@ -5,7 +5,10 @@ import kr.wayout.domain.generator.Generator;
 import kr.wayout.domain.generator.GeneratorRepository;
 import kr.wayout.domain.problem.Problem;
 import kr.wayout.domain.problem.ProblemRepository;
+import kr.wayout.domain.solution.Solution;
+import kr.wayout.domain.solution.SolutionRepository;
 import kr.wayout.domain.submission.Language;
+import kr.wayout.domain.submission.dto.SubmissionDto;
 import kr.wayout.domain.submission.runner.CounterExampleRunResult;
 import kr.wayout.domain.submission.runner.CounterExampleRunner;
 import kr.wayout.domain.validator.Validator;
@@ -19,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -31,6 +35,8 @@ import java.util.concurrent.TimeUnit;
 public class DockerCounterExampleRunner implements CounterExampleRunner {
 
     private static final String CPP_DOCKER_IMAGE = "gcc:14";
+    private static final String JAVA_DOCKER_IMAGE = "eclipse-temurin:17";
+    private static final String PYTHON_DOCKER_IMAGE = "python:3.11";
     private static final int TOTAL_CASES = 100;
     private static final int GROUP1_CASES = 20;
     private static final int GROUP2_CASES = 50;
@@ -42,9 +48,10 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
     private final ProblemRepository problemRepository;
     private final GeneratorRepository generatorRepository;
     private final ValidatorRepository validatorRepository;
+    private final SolutionRepository solutionRepository;
 
     @Override
-    public CounterExampleRunResult run(Long problemId) {
+    public CounterExampleRunResult run(Long problemId, String sourceCode, Language language) {
         long startedAt = System.nanoTime();
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 문제입니다."));
@@ -56,13 +63,12 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
         if (validator == null) {
             throw new EntityNotFoundException("Validator가 존재하지 않습니다.");
         }
+        Solution solution = solutionRepository.findTopByProblemOrderByVersionDesc(problem)
+                .orElseThrow(() -> new EntityNotFoundException("정답 코드가 존재하지 않습니다."));
 
         long baseSeed = System.nanoTime();
         List<String> generatorInputs = buildGeneratorInputs(baseSeed);
         List<String> generatedOutputs = runGeneratorBatch(generator, generatorInputs);
-        // for (int i = 0; i < generatedOutputs.size(); i++) {
-        //     log.info("Generated case: index={}, input=\n{}", i, generatedOutputs.get(i));
-        // }
         List<Boolean> validationResults = validateGeneratedOutputs(validator, generatedOutputs);
         List<String> filteredOutputs = new ArrayList<>();
         List<Boolean> filteredResults = new ArrayList<>();
@@ -75,23 +81,62 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
                 invalidCount++;
             }
         }
-        // log.info("Validator filter summary: total={}, valid={}, invalid={}, filtered={}",
-        //         generatedOutputs.size(),
-        //         filteredOutputs.size(),
-        //         invalidCount,
-        //         filteredOutputs.size());
 
+        if (filteredOutputs.isEmpty()) {
+            return CounterExampleRunResult.builder()
+                    .found(false)
+                    .executionTime(elapsedSeconds(startedAt))
+                    .message("NO_VALID_CASES")
+                    .generatedInputs(filteredOutputs)
+                    .validationResults(filteredResults)
+                    .counterExamples(List.of())
+                    .build();
+        }
+
+        List<String> programInputs = new ArrayList<>(filteredOutputs.size());
+        for (String output : filteredOutputs) {
+            programInputs.add(wrapSingleCaseForProgram(output));
+        }
+
+        List<String> submissionOutputs = executeInDockerForStdouts(
+                "submission",
+                sourceCode,
+                language,
+                programInputs
+        );
+        List<String> solutionOutputs = executeInDockerForStdouts(
+                "solution",
+                solution.getSourceCode(),
+                solution.getLanguage(),
+                programInputs
+        );
+
+        List<SubmissionDto.CounterExampleCase> counterExamples = new ArrayList<>();
+        for (int i = 0; i < filteredOutputs.size(); i++) {
+            String submissionOutput = submissionOutputs.get(i);
+            String solutionOutput = solutionOutputs.get(i);
+            if (!outputsMatch(submissionOutput, solutionOutput)) {
+                counterExamples.add(SubmissionDto.CounterExampleCase.builder()
+                        .input(filteredOutputs.get(i))
+                        .expectedOutput(solutionOutput)
+                        .actualOutput(submissionOutput)
+                        .build());
+            }
+        }
+
+        boolean found = !counterExamples.isEmpty();
         return CounterExampleRunResult.builder()
-                .found(false)
+                .found(found)
                 .executionTime(elapsedSeconds(startedAt))
-                .message("VALIDATOR_EXECUTED")
+                .message(found ? "COUNTER_EXAMPLE_FOUND" : "NO_COUNTER_EXAMPLE")
                 .generatedInputs(filteredOutputs)
                 .validationResults(filteredResults)
+                .counterExamples(counterExamples)
                 .build();
     }
 
     private List<String> runGeneratorBatch(Generator generator, List<String> stdins) {
-        return executeInDockerForStdouts(
+        return executeGeneratorInDockerForStdouts(
                 "generator",
                 generator.getSourceCode(),
                 Language.CPP,
@@ -102,7 +147,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
     private List<Boolean> validateGeneratedOutputs(Validator validator, List<String> generatedOutputs) {
         List<String> validatorInputs = new ArrayList<>(generatedOutputs.size());
         for (String output : generatedOutputs) {
-            validatorInputs.add(wrapSingleCaseForValidator(output));
+            validatorInputs.add(wrapSingleCaseForProgram(output));
         }
         return executeInDockerForValidationResults(
                 "validator",
@@ -171,7 +216,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
         return group + " " + pattern + " " + seed;
     }
 
-    private List<String> executeInDockerForStdouts(String role, String sourceCode, Language language, List<String> stdins) {
+    private List<String> executeGeneratorInDockerForStdouts(String role, String sourceCode, Language language, List<String> stdins) {
         if (language != Language.CPP) {
             throw new IllegalArgumentException("현재 Docker 실행기는 C++만 지원합니다.");
         }
@@ -208,6 +253,80 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
 
             Process process = new ProcessBuilder(command).start();
             process.getInputStream().readAllBytes(); // drain stdout to avoid blocking
+            String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+            boolean isFinished = process.waitFor(DOCKER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!isFinished) {
+                process.destroyForcibly();
+                throw new IllegalStateException("Docker 실행시간이 초과되었습니다.");
+            }
+
+            int exitCode = process.exitValue();
+            if (exitCode != 0) {
+                log.error("Docker run failed. role={}, exitCode={}, stderr={}", role, exitCode, stderr);
+                throw new IllegalStateException("Docker 실행에 실패했습니다. stderr=" + stderr);
+            }
+
+            List<String> outputs = new ArrayList<>(stdins.size());
+            for (int i = 0; i < stdins.size(); i++) {
+                Path outputFile = outputsDir.resolve("case_" + i + ".txt");
+                if (!Files.exists(outputFile)) {
+                    throw new IllegalStateException("Docker 실행 결과 파일이 없습니다. file=" + outputFile);
+                }
+                outputs.add(Files.readString(outputFile, StandardCharsets.UTF_8));
+            }
+            return outputs;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Docker 실행에 실패했습니다.", e);
+        } catch (IOException e) {
+            throw new IllegalStateException("Docker 실행에 실패했습니다.", e);
+        } finally {
+            if (workDir != null) {
+                cleanup(workDir);
+            }
+        }
+    }
+
+    private List<String> executeInDockerForStdouts(String role,
+                                                   String sourceCode,
+                                                   Language language,
+                                                   List<String> stdins) {
+        if (stdins == null || stdins.isEmpty()) {
+            return List.of();
+        }
+        if (language == null) {
+            throw new IllegalArgumentException("언어가 지정되지 않았습니다.");
+        }
+
+        Path workDir = null;
+        try {
+            workDir = Files.createTempDirectory("wayout-runner-" + role + "-");
+            Path inputsDir = workDir.resolve("inputs");
+            Path outputsDir = workDir.resolve("outputs");
+            Files.createDirectories(inputsDir);
+            Files.createDirectories(outputsDir);
+
+            Path sourceFile = resolveSourceFile(workDir, language);
+            Files.writeString(sourceFile, sourceCode, StandardCharsets.UTF_8);
+            for (int i = 0; i < stdins.size(); i++) {
+                String stdin = stdins.get(i);
+                Files.writeString(inputsDir.resolve("input_" + i + ".txt"), stdin == null ? "" : stdin, StandardCharsets.UTF_8);
+            }
+            if (language == Language.CPP) {
+                copyTestlibHeaderIfNeeded(sourceCode, workDir);
+            }
+
+            String script = buildProgramScript(language, stdins.size());
+            List<String> command = List.of(
+                    "docker", "run", "--rm",
+                    "-v", workDir.toAbsolutePath() + ":/work",
+                    "-w", "/work",
+                    resolveDockerImage(language),
+                    "bash", "-lc", script
+            );
+
+            Process process = new ProcessBuilder(command).start();
+            process.getInputStream().readAllBytes();
             String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
             boolean isFinished = process.waitFor(DOCKER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!isFinished) {
@@ -402,7 +521,78 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
         return builder.toString();
     }
 
-    private String wrapSingleCaseForValidator(String output) {
+    private Path resolveSourceFile(Path workDir, Language language) {
+        if (language == Language.CPP) {
+            return workDir.resolve("main.cpp");
+        }
+        if (language == Language.JAVA) {
+            return workDir.resolve("Solution.java");
+        }
+        if (language == Language.PYTHON) {
+            return workDir.resolve("main.py");
+        }
+        throw new IllegalArgumentException("지원하지 않는 언어입니다: " + language);
+    }
+
+    private String resolveDockerImage(Language language) {
+        if (language == Language.CPP) {
+            return CPP_DOCKER_IMAGE;
+        }
+        if (language == Language.JAVA) {
+            return JAVA_DOCKER_IMAGE;
+        }
+        if (language == Language.PYTHON) {
+            return PYTHON_DOCKER_IMAGE;
+        }
+        throw new IllegalArgumentException("지원하지 않는 언어입니다: " + language);
+    }
+
+    private String buildProgramScript(Language language, int caseCount) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("set -euo pipefail\n");
+        if (language == Language.CPP) {
+            builder.append("g++ -std=c++17 -O2 -o main main.cpp\n");
+        } else if (language == Language.JAVA) {
+            builder.append("javac Solution.java\n");
+        }
+        builder.append("mkdir -p outputs\n");
+        builder.append("set +e\n");
+        for (int i = 0; i < caseCount; i++) {
+            if (language == Language.CPP) {
+                builder.append("./main");
+            } else if (language == Language.JAVA) {
+                builder.append("java Solution");
+            } else if (language == Language.PYTHON) {
+                builder.append("python3 main.py");
+            } else {
+                throw new IllegalArgumentException("지원하지 않는 언어입니다: " + language);
+            }
+            builder.append(" < \"inputs/input_")
+                    .append(i)
+                    .append(".txt\" > \"outputs/case_")
+                    .append(i)
+                    .append(".txt\"\n");
+        }
+        builder.append("exit 0\n");
+        return builder.toString();
+    }
+
+    private boolean outputsMatch(String submissionOutput, String solutionOutput) {
+        return tokenizeOutput(submissionOutput).equals(tokenizeOutput(solutionOutput));
+    }
+
+    private List<String> tokenizeOutput(String output) {
+        if (output == null) {
+            return List.of();
+        }
+        String trimmed = output.trim();
+        if (trimmed.isEmpty()) {
+            return List.of();
+        }
+        return Arrays.asList(trimmed.split("\\s+"));
+    }
+
+    private String wrapSingleCaseForProgram(String output) {
         String body = output == null ? "" : output;
         body = body.stripTrailing();
         if (body.isEmpty()) {
