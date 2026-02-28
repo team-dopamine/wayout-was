@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 public class SubmissionDto {
 
     @Getter
@@ -34,5 +36,18 @@ public class SubmissionDto {
     public static class CreateCounterExampleResponse {
         private String status;
         private String message;
+        private Boolean found;
+        private Double executionTime;
+        private List<CounterExampleCase> counterExamples;
+        private String outputFilePath;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class CounterExampleCase {
+        private String input;
+        private String expectedOutput;
+        private String actualOutput;
     }
 }
