@@ -72,7 +72,8 @@ jobs:
           script: |
             docker stop wayout-was || true
             docker rm wayout-was || true
-            docker image prune -af
+            docker image rm ${{ secrets.DOCKER_USERNAME }}/wayout-was || true
+            docker image prune -af --filter "until=168h"
             docker pull ${{ secrets.DOCKER_USERNAME }}/wayout-was
             mkdir -p /var/lib/wayout/runner
             docker run -d -p 8080:8080 \
