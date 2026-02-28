@@ -18,9 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,7 +45,10 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
     private static final int GROUP3_CASES = 30;
     private static final int TARGET_PER_GROUP_DIVISOR = 5; // 20%
     private static final String TESTLIB_HEADER = "testlib.h";
+    private static final String TESTLIB_RESOURCE_PATH = "include/" + TESTLIB_HEADER;
     private static final int DOCKER_TIMEOUT_SECONDS = 60;
+    private static final String WORK_ROOT_ENV = "RUNNER_WORK_ROOT";
+    private static final String WORK_ROOT_PROP = "wayout.runner.workRoot";
 
     private final ProblemRepository problemRepository;
     private final GeneratorRepository generatorRepository;
@@ -226,7 +231,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
 
         Path workDir = null;
         try {
-            workDir = Files.createTempDirectory("wayout-runner-" + role + "-");
+            workDir = createWorkDir(role);
             Path sourceFile = workDir.resolve("main.cpp");
             Path inputsDir = workDir.resolve("inputs");
             Path outputsDir = workDir.resolve("outputs");
@@ -300,7 +305,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
 
         Path workDir = null;
         try {
-            workDir = Files.createTempDirectory("wayout-runner-" + role + "-");
+            workDir = createWorkDir(role);
             Path inputsDir = workDir.resolve("inputs");
             Path outputsDir = workDir.resolve("outputs");
             Files.createDirectories(inputsDir);
@@ -374,7 +379,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
 
         Path workDir = null;
         try {
-            workDir = Files.createTempDirectory("wayout-runner-" + role + "-");
+            workDir = createWorkDir(role);
             Path sourceFile = workDir.resolve("main.cpp");
             Path inputsDir = workDir.resolve("inputs");
             Path outputsDir = workDir.resolve("outputs");
@@ -470,17 +475,42 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
         }
     }
 
+    private Path createWorkDir(String role) throws IOException {
+        String workRoot = resolveWorkRoot();
+        String prefix = "wayout-runner-" + role + "-";
+        if (workRoot == null || workRoot.isBlank()) {
+            return Files.createTempDirectory(prefix);
+        }
+        Path base = Path.of(workRoot).toAbsolutePath().normalize();
+        Files.createDirectories(base);
+        return Files.createTempDirectory(base, prefix);
+    }
+
+    private String resolveWorkRoot() {
+        String fromEnv = System.getenv(WORK_ROOT_ENV);
+        if (fromEnv != null && !fromEnv.isBlank()) {
+            return fromEnv;
+        }
+        String fromProp = System.getProperty(WORK_ROOT_PROP);
+        if (fromProp != null && !fromProp.isBlank()) {
+            return fromProp;
+        }
+        return null;
+    }
+
     private void copyTestlibHeaderIfNeeded(String sourceCode, Path workDir) throws IOException {
         if (sourceCode == null || !sourceCode.contains(TESTLIB_HEADER)) {
             return;
         }
 
-        Path localHeader = Path.of(TESTLIB_HEADER);
-        if (!Files.exists(localHeader)) {
-            throw new IllegalStateException("testlib.h가 필요합니다. 서버 실행 디렉터리(user.dir)에 testlib.h 파일을 두세요.");
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream(TESTLIB_RESOURCE_PATH)) {
+            if (in == null) {
+                throw new IllegalStateException("testlib.h가 필요합니다. classpath에 include/testlib.h를 넣어주세요.");
+            }
+            Path destHeader = workDir.resolve(TESTLIB_RESOURCE_PATH);
+            Files.createDirectories(destHeader.getParent());
+            Files.copy(in, destHeader, StandardCopyOption.REPLACE_EXISTING);
         }
-
-        Files.copy(localHeader, workDir.resolve(TESTLIB_HEADER));
     }
 
     private double elapsedSeconds(long startedAt) {
@@ -490,7 +520,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
     private String buildGeneratorScript(List<String> seedArgs) {
         StringBuilder builder = new StringBuilder();
         builder.append("set -euo pipefail\n");
-        builder.append("g++ -std=c++17 -O2 -o main main.cpp\n");
+        builder.append("g++ -std=c++17 -O2 -I./include -o main main.cpp\n");
         builder.append("mkdir -p outputs\n");
         for (int i = 0; i < seedArgs.size(); i++) {
             builder.append("./main ")
@@ -507,7 +537,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
     private String buildValidatorScript(int caseCount) {
         StringBuilder builder = new StringBuilder();
         builder.append("set -euo pipefail\n");
-        builder.append("g++ -std=c++17 -O2 -o main main.cpp\n");
+        builder.append("g++ -std=c++17 -O2 -I./include -o main main.cpp\n");
         builder.append("mkdir -p outputs\n");
         builder.append("set +e\n");
         for (int i = 0; i < caseCount; i++) {
@@ -551,7 +581,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
         StringBuilder builder = new StringBuilder();
         builder.append("set -euo pipefail\n");
         if (language == Language.CPP) {
-            builder.append("g++ -std=c++17 -O2 -o main main.cpp\n");
+            builder.append("g++ -std=c++17 -O2 -I./include -o main main.cpp\n");
         } else if (language == Language.JAVA) {
             builder.append("javac Solution.java\n");
         }
