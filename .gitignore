@@ -6,6 +6,7 @@ build/
 !**/src/test/**/build/
 src/main/resources/application.yml
 .gradle-home/
+docs
 
 ### STS ###
 .apt_generated
