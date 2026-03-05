@@ -7,6 +7,8 @@ import kr.wayout.domain.problem.ProblemRepository;
 import kr.wayout.domain.submission.dto.SubmissionDto;
 import kr.wayout.domain.submission.runner.CounterExampleRunResult;
 import kr.wayout.domain.submission.runner.CounterExampleRunner;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +29,7 @@ public class SubmissionService {
                                                                            SubmissionDto.CreateCounterExampleRequest dto) {
         Member member = resolveMember(email);
         Problem problem = problemRepository.findById(dto.getProblemId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 문제입니다."));
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.PROBLEM_NOT_FOUND));
 
         CounterExampleRunResult result = counterExampleRunner.run(
                 dto.getProblemId(),

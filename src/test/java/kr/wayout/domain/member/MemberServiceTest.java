@@ -2,6 +2,8 @@ package kr.wayout.domain.member;
 
 import kr.wayout.domain.member.dto.MemberDto;
 import kr.wayout.domain.member.dto.NicknameDto;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -128,8 +130,8 @@ class MemberServiceTest {
 
         // when / then
         Assertions.assertThatThrownBy(() -> memberService.getNickname(email))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("존재하지 않는 사용자입니다.");
+                .isInstanceOfSatisfying(CustomBusinessException.class, exception ->
+                        Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND));
     }
 
     @Test

@@ -6,6 +6,8 @@ import kr.wayout.domain.member.Role;
 import kr.wayout.global.auth.dto.SignInDto;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import kr.wayout.global.auth.jwt.RefreshTokenStore;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,8 +22,6 @@ public class AuthService {
     private final MemberService memberService;
     private final RefreshTokenStore refreshTokenStore;
 
-    // TODO: Custom Exception 적용 후 변경 필요
-
     public SignInDto.CheckResponse check(String email) {
         Member member = memberService.read(email);
         return SignInDto.CheckResponse.from(member.getNickname());
@@ -33,12 +33,12 @@ public class AuthService {
 
     public String reissue(String refreshToken) {
         if (!jwtProvider.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("Refresh Token이 유효하지 않습니다.");
+            throw new CustomBusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         String email = jwtProvider.getEmail(refreshToken);
         if (!refreshTokenStore.validate(email, refreshToken)) {
-            throw new IllegalArgumentException("Refresh Token이 존재하지 않습니다.");
+            throw new CustomBusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
         return jwtProvider.createAccessToken(email, Role.USER);
@@ -49,7 +49,7 @@ public class AuthService {
         Member member = memberService.read(email);
 
         if (member.isDeleted()) {
-            throw new IllegalStateException("이미 삭제 된 사용자입니다.");
+            throw new CustomBusinessException(ErrorCode.MEMBER_ALREADY_DELETED);
         }
 
         member.delete();

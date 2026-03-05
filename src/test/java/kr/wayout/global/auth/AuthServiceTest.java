@@ -5,6 +5,8 @@ import kr.wayout.domain.member.MemberService;
 import kr.wayout.domain.member.Role;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import kr.wayout.global.auth.jwt.RefreshTokenStore;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -61,7 +63,8 @@ class AuthServiceTest {
 
         // when & then
         Assertions.assertThatThrownBy(() -> authService.reissue(refreshToken))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOfSatisfying(CustomBusinessException.class, exception ->
+                        Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_REFRESH_TOKEN));
     }
 
 
@@ -76,10 +79,10 @@ class AuthServiceTest {
         given(jwtProvider.getEmail(refreshToken)).willReturn(email);
         given(refreshTokenStore.validate(email, refreshToken)).willReturn(false);
 
-        // TODO: Custom Exception 적용하면 수정해야 함.
         // when & then
         Assertions.assertThatThrownBy(() -> authService.reissue(refreshToken))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOfSatisfying(CustomBusinessException.class, exception ->
+                        Assertions.assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
     }
 
     @Test

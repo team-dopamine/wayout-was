@@ -2,9 +2,10 @@ package kr.wayout.domain.member;
 
 import kr.wayout.domain.member.dto.MemberDto;
 import kr.wayout.domain.member.dto.NicknameDto;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,14 +56,13 @@ public class MemberService {
             return member;
         }
 
-        throw new OAuth2AuthenticationException("탈퇴 후 30일이 경과하여 복구할 수 없습니다.");
+        throw new CustomBusinessException(ErrorCode.MEMBER_RESTORE_FAILED);
     }
 
 
     @Transactional
     public NicknameDto.UpdateResponse changeNickname(String email, NicknameDto.UpdateRequest dto) {
         Member member = read(email);
-        // TODO: Custom Exception 도입 후 수정 필요
         String oldNickName = member.getNickname();
         String nickname = dto.getNickname();
 
@@ -75,7 +75,7 @@ public class MemberService {
 
     public Member read(String email) {
         return memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
     private String generateTemporaryNickname() {
