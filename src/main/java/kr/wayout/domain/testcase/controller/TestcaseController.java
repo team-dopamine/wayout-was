@@ -1,5 +1,6 @@
 package kr.wayout.domain.testcase.controller;
 
+import jakarta.validation.Valid;
 import kr.wayout.domain.testcase.TestcaseService;
 import kr.wayout.domain.testcase.dto.TestcaseDto;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class TestcaseController implements TestcaseApi {
 
     @Override
     @PostMapping
-    public ResponseEntity<?> create(@AuthenticationPrincipal String email, @RequestBody TestcaseDto.CreateRequest dto) {
+    public ResponseEntity<?> create(@AuthenticationPrincipal String email, @Valid @RequestBody TestcaseDto.CreateRequest dto) {
         return ResponseEntity.ok(testcaseService.create(email, dto));
     }
 }

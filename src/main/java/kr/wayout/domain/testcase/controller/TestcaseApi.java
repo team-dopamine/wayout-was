@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.wayout.domain.testcase.dto.TestcaseDto;
 import org.springframework.http.ResponseEntity;
 
-@Tag(name = "[테스트 케이스 API]", description = "커스텀 테스크 케이스 및 엣지 케이스 관리를 위한 API")
+@Tag(name = "[테스트 케이스 API]", description = "커스텀 테스트 케이스 및 엣지 케이스 관리를 위한 API")
 public interface TestcaseApi {
 
     @Operation(summary = "테스트 케이스 등록 API", description = "사용자가 테스트 케이스를 등록합니다.")
