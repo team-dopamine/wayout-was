@@ -139,6 +139,25 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
                 .counterExamples(counterExamples)
                 .build();
     }
+    
+    public boolean validateSingleCase(Problem problem, String inputBody) {
+        Validator validator = validatorRepository.findValidatorByProblem(problem);
+        if (validator == null) {
+            throw new EntityNotFoundException("Validator가 존재하지 않습니다.");
+        }
+
+        String wrapped = wrapSingleCaseForProgram(inputBody);
+        List<Boolean> results = executeInDockerForValidationResults(
+                "validator",
+                validator.getSourceCode(),
+                Language.CPP,
+                List.of(wrapped)
+        );
+        if (results.size() != 1) {
+            throw new IllegalStateException("Validator 결과 개수가 일치하지 않습니다. expected=1 actual=" + results.size());
+        }
+        return results.get(0);
+    }
 
     private List<String> runGeneratorBatch(Generator generator, List<String> stdins) {
         return executeGeneratorInDockerForStdouts(
