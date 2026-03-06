@@ -1,11 +1,12 @@
 package kr.wayout.domain.testcase;
 
-import jakarta.persistence.EntityNotFoundException;
 import kr.wayout.domain.member.Member;
 import kr.wayout.domain.member.MemberRepository;
 import kr.wayout.domain.problem.Problem;
 import kr.wayout.domain.problem.ProblemRepository;
 import kr.wayout.domain.testcase.dto.TestcaseDto;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import kr.wayout.infrastructure.runner.DockerCounterExampleRunner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,17 +27,17 @@ public class TestcaseService {
     public TestcaseDto.CreateResponse create(String email, TestcaseDto.CreateRequest dto) {
 
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         Problem problem = problemRepository.findProblemById(dto.getProblemId());
 
         if (problem == null) {
-            throw new EntityNotFoundException("존재하지 않는 문제입니다.");
+            throw new CustomBusinessException(ErrorCode.PROBLEM_NOT_FOUND);
         }
 
         boolean isValid = dockerCounterExampleRunner.validateSingleCase(problem, dto.getInput());
         if (!isValid) {
-            throw new IllegalArgumentException("문제 조건에 맞지 않는 입력입니다.");
+            throw new CustomBusinessException(ErrorCode.INVALID_TESTCASE_INPUT);
         }
 
         save(member, problem, dto.getInput(), dto.getOutput());

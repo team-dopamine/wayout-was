@@ -5,6 +5,8 @@ import kr.wayout.domain.member.MemberService;
 import kr.wayout.domain.problem.Problem;
 import kr.wayout.domain.problem.ProblemRepository;
 import kr.wayout.domain.solution.dto.SolutionDto;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +24,7 @@ public class SolutionService {
         Member member = memberService.read(email);
 
         Problem problem = problemRepository.findById(dto.getProblemId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 문제입니다."));
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.PROBLEM_NOT_FOUND));
 
         int nextVersion = solutionRepository.findTopByProblemOrderByVersionDesc(problem)
                 .map(solution -> solution.getVersion() + 1)
