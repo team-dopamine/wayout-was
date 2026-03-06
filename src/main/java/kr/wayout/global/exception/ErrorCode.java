@@ -17,7 +17,7 @@ public enum ErrorCode {
     // B: 비즈니스 로직 오류
     MEMBER_NOT_FOUND("B001", HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."),
     PROBLEM_NOT_FOUND("B002", HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."),
-    MEMBER_ALREADY_DELETED("B001", HttpStatus.CONFLICT, "이미 삭제 된 사용자입니다."),
+    MEMBER_ALREADY_DELETED("B003", HttpStatus.CONFLICT, "이미 삭제 된 사용자입니다."),
 
     // V: 요청 관련 오류
     INVALID_VALUE("V001", HttpStatus.BAD_REQUEST, "잘못된 입력입니다."),
