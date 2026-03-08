@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class SubmissionDto {
@@ -49,5 +50,17 @@ public class SubmissionDto {
         private String input;
         private String expectedOutput;
         private String actualOutput;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class ListResponse {
+        private Long id;
+        private String nickname;
+        private String title;
+        private Language language;
+        private Double executionTime;
+        private LocalDateTime createdAt;
     }
 }
