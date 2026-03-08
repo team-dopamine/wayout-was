@@ -10,13 +10,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,5 +63,32 @@ class SubmissionControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PENDING"));
+    }
+
+    @Test
+    @DisplayName("제출 목록 조회 API - 회원/비회원 제출 이력을 페이지 형태로 반환한다")
+    void list_success() throws Exception {
+        // given
+        SubmissionDto.ListResponse item = SubmissionDto.ListResponse.builder()
+                .id(1L)
+                .nickname("익명")
+                .title("A+B")
+                .language(Language.JAVA)
+                .executionTime(1.5)
+                .createdAt(LocalDateTime.of(2026, 3, 8, 12, 0))
+                .build();
+
+        PageRequest pageable = PageRequest.of(0, 8);
+        given(submissionService.list(any())).willReturn(new PageImpl<>(List.of(item), pageable, 1));
+
+        // when & then
+        mockMvc.perform(get("/submissions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].nickname").value("익명"))
+                .andExpect(jsonPath("$.content[0].title").value("A+B"))
+                .andExpect(jsonPath("$.content[0].language").value("JAVA"))
+                .andExpect(jsonPath("$.content[0].executionTime").value(1.5))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 }
