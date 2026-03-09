@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.wayout.domain.submission.dto.SubmissionDto;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 @Tag(name = "[제출 API]", description = "반례 탐색 요청 API")
@@ -20,4 +22,14 @@ public interface SubmissionApi {
             @ApiResponse(responseCode = "400", description = "요청값 오류")
     })
     ResponseEntity<?> createCounterExample(String email, SubmissionDto.CreateCounterExampleRequest dto);
+
+    @Operation(summary = "제출 목록 조회 API", description = "사용자들의 제출 기록을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "제출 기록 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SubmissionDto.ListResponse.class))),
+            @ApiResponse(responseCode = "400", description = "요청값 오류")
+
+    })
+    ResponseEntity<?> list(@ParameterObject Pageable pageable);
 }
