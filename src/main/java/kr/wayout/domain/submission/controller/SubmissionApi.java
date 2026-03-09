@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.wayout.domain.submission.dto.SubmissionDto;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
@@ -30,5 +31,5 @@ public interface SubmissionApi {
             @ApiResponse(responseCode = "400", description = "요청값 오류")
 
     })
-    ResponseEntity<?> list(Pageable pageable);
+    ResponseEntity<?> list(@ParameterObject Pageable pageable);
 }
