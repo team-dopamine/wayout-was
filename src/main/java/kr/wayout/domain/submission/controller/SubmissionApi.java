@@ -1,6 +1,7 @@
 package kr.wayout.domain.submission.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,8 +29,18 @@ public interface SubmissionApi {
             @ApiResponse(responseCode = "200", description = "제출 기록 조회 성공",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = SubmissionDto.ListResponse.class))),
-            @ApiResponse(responseCode = "400", description = "요청값 오류")
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 문제입니다.")
 
     })
     ResponseEntity<?> list(@ParameterObject Pageable pageable);
+
+    @Operation(summary = "특정 문제의 제출 목록 조회 API", description = "특정 문제에 대하여 사용자들의 제출 기록을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "제출 기록 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SubmissionDto.ListResponse.class))),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 문제입니다.")
+
+    })
+    ResponseEntity<?> listByProblem(@ParameterObject Pageable pageable, @Parameter(description = "문제 id값") Long problemId);
 }

@@ -6,6 +6,8 @@ import kr.wayout.domain.problem.Problem;
 import kr.wayout.domain.problem.ProblemRepository;
 import kr.wayout.domain.submission.dto.SubmissionDto;
 import kr.wayout.domain.submission.runner.CounterExampleRunner;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -120,5 +122,87 @@ class SubmissionServiceTest {
         Assertions.assertThat(result.getContent()).isEmpty();
         Assertions.assertThat(result.getTotalElements()).isZero();
         verifyNoInteractions(memberService, problemRepository, counterExampleRunner);
+    }
+
+    @Test
+    @DisplayName("특정 문제 제출 목록 조회 서비스 - 해당 문제 제출 정보를 응답으로 매핑한다")
+    void list_by_problem_success() {
+        // given
+        PageRequest pageable = PageRequest.of(0, 8);
+        Long problemId = 1L;
+
+        Problem problem = Mockito.mock(Problem.class);
+        Member member = Mockito.mock(Member.class);
+        Submission submission = Mockito.mock(Submission.class);
+        LocalDateTime createdAt = LocalDateTime.of(2026, 3, 10, 10, 0);
+
+        BDDMockito.given(problemRepository.findProblemById(problemId)).willReturn(problem);
+        BDDMockito.given(problem.getTitle()).willReturn("A+B");
+        BDDMockito.given(member.getNickname()).willReturn("Jsplix");
+        BDDMockito.given(submission.getId()).willReturn(10L);
+        BDDMockito.given(submission.getMember()).willReturn(member);
+        BDDMockito.given(submission.getLanguage()).willReturn(Language.CPP);
+        BDDMockito.given(submission.getExecutionTime()).willReturn(0.7);
+        BDDMockito.given(submission.getCreatedAt()).willReturn(createdAt);
+
+        BDDMockito.given(submissionRepository.findAllByProblem(pageable, problem))
+                .willReturn(new PageImpl<>(List.of(submission), pageable, 1));
+
+        // when
+        Page<SubmissionDto.ListResponse> result = submissionService.listByProblemId(pageable, problemId);
+
+        // then
+        Assertions.assertThat(result.getTotalElements()).isEqualTo(1);
+        Assertions.assertThat(result.getContent()).hasSize(1);
+
+        SubmissionDto.ListResponse item = result.getContent().get(0);
+        Assertions.assertThat(item.getId()).isEqualTo(10L);
+        Assertions.assertThat(item.getNickname()).isEqualTo("Jsplix");
+        Assertions.assertThat(item.getTitle()).isEqualTo("A+B");
+        Assertions.assertThat(item.getLanguage()).isEqualTo(Language.CPP);
+        Assertions.assertThat(item.getExecutionTime()).isEqualTo(0.7);
+        Assertions.assertThat(item.getCreatedAt()).isEqualTo(createdAt);
+
+        verifyNoInteractions(memberService, counterExampleRunner);
+    }
+
+    @Test
+    @DisplayName("특정 문제 제출 목록 조회 서비스 - 데이터가 없으면 빈 페이지를 반환한다")
+    void list_by_problem_empty_page() {
+        // given
+        PageRequest pageable = PageRequest.of(0, 8);
+        Long problemId = 1L;
+
+        Problem problem = Mockito.mock(Problem.class);
+        BDDMockito.given(problemRepository.findProblemById(problemId)).willReturn(problem);
+        BDDMockito.given(submissionRepository.findAllByProblem(pageable, problem))
+                .willReturn(new PageImpl<>(Collections.emptyList(), pageable, 0));
+
+        // when
+        Page<SubmissionDto.ListResponse> result = submissionService.listByProblemId(pageable, problemId);
+
+        // then
+        Assertions.assertThat(result.getContent()).isEmpty();
+        Assertions.assertThat(result.getTotalElements()).isZero();
+        verifyNoInteractions(memberService, counterExampleRunner);
+    }
+
+    @Test
+    @DisplayName("특정 문제 제출 목록 조회 서비스 - 문제가 없으면 예외를 던진다")
+    void list_by_problem_problem_not_found() {
+        // given
+        PageRequest pageable = PageRequest.of(0, 8);
+        Long problemId = 999L;
+        BDDMockito.given(problemRepository.findProblemById(problemId)).willReturn(null);
+
+        // when
+        Assertions.assertThatThrownBy(() -> submissionService.listByProblemId(pageable, problemId))
+                .isInstanceOf(CustomBusinessException.class)
+                .satisfies(throwable ->
+                        Assertions.assertThat(((CustomBusinessException) throwable).getErrorCode())
+                                .isEqualTo(ErrorCode.PROBLEM_NOT_FOUND));
+
+        // then
+        verifyNoInteractions(memberService, submissionRepository, counterExampleRunner);
     }
 }

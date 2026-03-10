@@ -1,5 +1,6 @@
 package kr.wayout.domain.submission;
 
+import kr.wayout.domain.problem.Problem;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,4 +33,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<SubmissionCountRow> countByProblemIds(@Param("problemIds") List<Long> problemIds);
 
     Page<Submission> findAll(Pageable pageable);
+
+    Page<Submission> findAllByProblem(Pageable pageable, Problem problem);
 }
