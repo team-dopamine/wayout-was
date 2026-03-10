@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.wayout.domain.submission.Language;
 import kr.wayout.domain.submission.SubmissionService;
 import kr.wayout.domain.submission.dto.SubmissionDto;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import kr.wayout.global.auth.jwt.JwtProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -90,5 +93,48 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.content[0].language").value("JAVA"))
                 .andExpect(jsonPath("$.content[0].executionTime").value(1.5))
                 .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("특정 문제 제출 목록 조회 API - 해당 문제 제출 이력을 페이지 형태로 반환한다")
+    void list_by_problem_success() throws Exception {
+        // given
+        SubmissionDto.ListResponse item = SubmissionDto.ListResponse.builder()
+                .id(10L)
+                .nickname("Jsplix")
+                .title("A+B")
+                .language(Language.CPP)
+                .executionTime(0.7)
+                .createdAt(LocalDateTime.of(2026, 3, 10, 10, 0))
+                .build();
+
+        PageRequest pageable = PageRequest.of(0, 8);
+        given(submissionService.listByProblemId(any(), eq(1L)))
+                .willReturn(new PageImpl<>(List.of(item), pageable, 1));
+
+        // when & then
+        mockMvc.perform(get("/problems/{problemId}/submissions", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(10))
+                .andExpect(jsonPath("$.content[0].nickname").value("Jsplix"))
+                .andExpect(jsonPath("$.content[0].title").value("A+B"))
+                .andExpect(jsonPath("$.content[0].language").value("CPP"))
+                .andExpect(jsonPath("$.content[0].executionTime").value(0.7))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("특정 문제 제출 목록 조회 API - 존재하지 않는 문제면 404를 반환한다")
+    void list_by_problem_not_found() throws Exception {
+        // given
+        given(submissionService.listByProblemId(any(), eq(999L)))
+                .willThrow(new CustomBusinessException(ErrorCode.PROBLEM_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(get("/problems/{problemId}/submissions", 999L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("B002"))
+                .andExpect(jsonPath("$.message").value("존재하지 않는 문제입니다."))
+                .andExpect(jsonPath("$.path").value("/problems/999/submissions"));
     }
 }
