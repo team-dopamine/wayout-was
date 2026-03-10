@@ -91,6 +91,35 @@ public class SubmissionService {
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }
 
+    public Page<SubmissionDto.ListResponse> listByProblemId(Pageable pageable, Long problemId) {
+
+        Problem problem = problemRepository.findProblemById(problemId);
+        if (problem == null) {
+            throw new CustomBusinessException(ErrorCode.PROBLEM_NOT_FOUND);
+        }
+
+        Page<Submission> page = submissionRepository.findAllByProblem(pageable, problem);
+        List<Submission> submissions = page.getContent();
+        if (submissions.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, page.getTotalElements());
+        }
+
+        List<SubmissionDto.ListResponse> content = submissions.stream()
+                .map(submission -> {
+                    return new SubmissionDto.ListResponse(
+                            submission.getId(),
+                            submission.getMember() != null ? submission.getMember().getNickname() : "익명",
+                            problem.getTitle(),
+                            submission.getLanguage(),
+                            submission.getExecutionTime(),
+                            submission.getCreatedAt()
+                    );
+                })
+                .toList();
+        
+        return new PageImpl<>(content, pageable, page.getTotalElements());
+    }
+
     private Member resolveMember(String email) {
         if (email == null || "anonymousUser".equals(email)) {
             return null;
