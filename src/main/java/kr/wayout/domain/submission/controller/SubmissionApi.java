@@ -29,7 +29,7 @@ public interface SubmissionApi {
             @ApiResponse(responseCode = "200", description = "제출 기록 조회 성공",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = SubmissionDto.ListResponse.class))),
-            @ApiResponse(responseCode = "400", description = "요청값 오류")
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 문제입니다.")
 
     })
     ResponseEntity<?> list(@ParameterObject Pageable pageable);
@@ -39,7 +39,7 @@ public interface SubmissionApi {
             @ApiResponse(responseCode = "200", description = "제출 기록 조회 성공",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = SubmissionDto.ListResponse.class))),
-            @ApiResponse(responseCode = "400", description = "요청값 오류")
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 문제입니다.")
 
     })
     ResponseEntity<?> listByProblem(@ParameterObject Pageable pageable, @Parameter(description = "문제 id값") Long problemId);
