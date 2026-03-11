@@ -86,12 +86,29 @@ public class ProblemService {
         }
 
         String titleKeyword = titleTokens.isEmpty() ? null : String.join(" ", titleTokens);
-        if (problemNo == null && (titleKeyword == null || titleKeyword.length() < MIN_SEARCH_KEYWORD_LENGTH)) {
+        Pageable pageable = createSearchPageable(limit);
+
+        if (problemNo != null) {
+            List<Problem> byProblemNo = problemRepository.search(problemNo, null, pageable);
+            if (!byProblemNo.isEmpty()) {
+                return byProblemNo.stream().map(ProblemDto.Search::from).toList();
+            }
+
+            String fallbackTitleKeyword = (titleKeyword != null) ? titleKeyword : normalizedKeyword;
+            if (fallbackTitleKeyword.length() < MIN_SEARCH_KEYWORD_LENGTH) {
+                return List.of();
+            }
+
+            return problemRepository.search(null, fallbackTitleKeyword, pageable).stream()
+                    .map(ProblemDto.Search::from)
+                    .toList();
+        }
+
+        if (titleKeyword == null || titleKeyword.length() < MIN_SEARCH_KEYWORD_LENGTH) {
             return List.of();
         }
 
-        Pageable pageable = createSearchPageable(limit);
-        return problemRepository.search(problemNo, titleKeyword, pageable).stream()
+        return problemRepository.search(null, titleKeyword, pageable).stream()
                 .map(ProblemDto.Search::from)
                 .toList();
     }

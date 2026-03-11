@@ -10,6 +10,7 @@ import org.mockito.BDDMockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.InOrder;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -23,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -159,11 +161,12 @@ class ProblemServiceTest {
         Assertions.assertThat(result).hasSize(1);
         Assertions.assertThat(result.getFirst().getProblemNo()).isEqualTo(1000);
         verify(problemRepository).search(eq(1000), isNull(), any(Pageable.class));
+        verify(problemRepository, never()).search(isNull(), eq("1000"), any(Pageable.class));
     }
 
     @Test
-    @DisplayName("문제 검색 서비스 - 문제 번호와 제목을 함께 입력하면 둘 다 반영한다")
-    void search_by_problem_no_and_title_success() {
+    @DisplayName("문제 검색 서비스 - 문제 번호 검색 결과가 없으면 제목 검색으로 fallback 한다")
+    void search_fallback_to_title_when_problem_no_not_found() {
         // given
         Problem problem = Mockito.mock(Problem.class);
         BDDMockito.given(problem.getId()).willReturn(12L);
@@ -171,7 +174,9 @@ class ProblemServiceTest {
         BDDMockito.given(problem.getTitle()).willReturn("A+B");
         BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
 
-        BDDMockito.given(problemRepository.search(eq(1000), eq("A+B"), any(Pageable.class)))
+        BDDMockito.given(problemRepository.search(eq(1000), isNull(), any(Pageable.class)))
+                .willReturn(List.of());
+        BDDMockito.given(problemRepository.search(isNull(), eq("A+B"), any(Pageable.class)))
                 .willReturn(List.of(problem));
 
         // when
@@ -179,7 +184,9 @@ class ProblemServiceTest {
 
         // then
         Assertions.assertThat(result).hasSize(1);
-        verify(problemRepository).search(eq(1000), eq("A+B"), any(Pageable.class));
+        InOrder inOrder = inOrder(problemRepository);
+        inOrder.verify(problemRepository).search(eq(1000), isNull(), any(Pageable.class));
+        inOrder.verify(problemRepository).search(isNull(), eq("A+B"), any(Pageable.class));
     }
 
     @Test
