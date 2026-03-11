@@ -14,11 +14,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -97,5 +101,109 @@ class ProblemServiceTest {
         Assertions.assertThat(result.getContent()).isEmpty();
         Assertions.assertThat(result.getTotalElements()).isZero();
         verify(submissionRepository, never()).countByProblemIds(anyList());
+    }
+
+    @Test
+    @DisplayName("문제 제목 검색 서비스 - 키워드가 2글자 미만이면 빈 목록을 반환한다")
+    void search_by_title_returns_empty_when_keyword_too_short() {
+        // when
+        List<ProblemDto.Search> result = problemService.search(" A ", 10);
+
+        // then
+        Assertions.assertThat(result).isEmpty();
+        verify(problemRepository, never()).search(any(), any(), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("문제 제목 검색 서비스 - 제목 포함 검색 결과를 DTO로 반환한다")
+    void search_by_title_success() {
+        // given
+        Problem problem = Mockito.mock(Problem.class);
+        BDDMockito.given(problem.getId()).willReturn(3L);
+        BDDMockito.given(problem.getProblemNo()).willReturn(1200);
+        BDDMockito.given(problem.getTitle()).willReturn("A+B");
+        BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
+
+        BDDMockito.given(problemRepository.search(isNull(), eq("A+B"), any(Pageable.class)))
+                .willReturn(List.of(problem));
+
+        // when
+        List<ProblemDto.Search> result = problemService.search("  A+B  ", 20);
+
+        // then
+        Assertions.assertThat(result).hasSize(1);
+        ProblemDto.Search item = result.getFirst();
+        Assertions.assertThat(item.getProblemId()).isEqualTo(3L);
+        Assertions.assertThat(item.getProblemNo()).isEqualTo(1200);
+        Assertions.assertThat(item.getTitle()).isEqualTo("A+B");
+        Assertions.assertThat(item.getPlatform()).isEqualTo(Platform.SWEA);
+    }
+
+    @Test
+    @DisplayName("문제 검색 서비스 - 숫자 키워드는 문제 번호로도 검색한다")
+    void search_by_problem_no_success() {
+        // given
+        Problem problem = Mockito.mock(Problem.class);
+        BDDMockito.given(problem.getId()).willReturn(11L);
+        BDDMockito.given(problem.getProblemNo()).willReturn(1000);
+        BDDMockito.given(problem.getTitle()).willReturn("A+B");
+        BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
+
+        BDDMockito.given(problemRepository.search(eq(1000), isNull(), any(Pageable.class)))
+                .willReturn(List.of(problem));
+
+        // when
+        List<ProblemDto.Search> result = problemService.search("1000", 20);
+
+        // then
+        Assertions.assertThat(result).hasSize(1);
+        Assertions.assertThat(result.getFirst().getProblemNo()).isEqualTo(1000);
+        verify(problemRepository).search(eq(1000), isNull(), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("문제 검색 서비스 - 문제 번호와 제목을 함께 입력하면 둘 다 반영한다")
+    void search_by_problem_no_and_title_success() {
+        // given
+        Problem problem = Mockito.mock(Problem.class);
+        BDDMockito.given(problem.getId()).willReturn(12L);
+        BDDMockito.given(problem.getProblemNo()).willReturn(1000);
+        BDDMockito.given(problem.getTitle()).willReturn("A+B");
+        BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
+
+        BDDMockito.given(problemRepository.search(eq(1000), eq("A+B"), any(Pageable.class)))
+                .willReturn(List.of(problem));
+
+        // when
+        List<ProblemDto.Search> result = problemService.search("1000 A+B", 20);
+
+        // then
+        Assertions.assertThat(result).hasSize(1);
+        verify(problemRepository).search(eq(1000), eq("A+B"), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("문제 검색 서비스 - limit이 0 이하면 예외를 던진다")
+    void search_throws_when_limit_invalid() {
+        // when & then
+        Assertions.assertThatThrownBy(() -> problemService.search("AB", 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("limit은 1 이상이어야 합니다.");
+    }
+
+    @Test
+    @DisplayName("문제 검색 서비스 - limit은 최대 10으로 제한된다")
+    void search_clamps_limit_to_max() {
+        // given
+        BDDMockito.given(problemRepository.search(isNull(), eq("AB"), any(Pageable.class)))
+                .willReturn(List.of());
+
+        // when
+        problemService.search("AB", 100);
+
+        // then
+        org.mockito.ArgumentCaptor<Pageable> captor = org.mockito.ArgumentCaptor.forClass(Pageable.class);
+        verify(problemRepository).search(isNull(), eq("AB"), captor.capture());
+        Assertions.assertThat(captor.getValue().getPageSize()).isEqualTo(10);
     }
 }
