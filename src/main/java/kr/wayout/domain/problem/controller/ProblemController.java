@@ -7,6 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,5 +22,12 @@ public class ProblemController implements ProblemApi {
     @GetMapping
     public ResponseEntity<?> list(@PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(problemService.list(pageable));
+    }
+
+    @Override
+    @GetMapping("/search")
+    public ResponseEntity<?> search(@RequestParam(defaultValue = "") String keyword,
+                                    @RequestParam(defaultValue = "10") Integer limit) {
+        return ResponseEntity.ok(problemService.search(keyword, limit));
     }
 }
