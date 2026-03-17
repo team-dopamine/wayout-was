@@ -18,7 +18,7 @@ public interface ProblemRepository extends JpaRepository<Problem, Long> {
             SELECT p
             FROM Problem p
             WHERE (:problemNo IS NULL OR p.problemNo = :problemNo)
-              AND (:titleKeyword IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :titleKeyword, '%')))
+              AND (:titleKeyword IS NULL OR LOWER(p.title) LIKE :titleKeyword)
             """)
     List<Problem> search(@Param("problemNo") Integer problemNo,
                          @Param("titleKeyword") String titleKeyword,

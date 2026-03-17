@@ -126,7 +126,7 @@ class ProblemServiceTest {
         BDDMockito.given(problem.getTitle()).willReturn("A+B");
         BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
 
-        BDDMockito.given(problemRepository.search(isNull(), eq("A+B"), any(Pageable.class)))
+        BDDMockito.given(problemRepository.search(isNull(), eq("%a+b%"), any(Pageable.class)))
                 .willReturn(List.of(problem));
 
         // when
@@ -176,7 +176,7 @@ class ProblemServiceTest {
 
         BDDMockito.given(problemRepository.search(eq(1000), isNull(), any(Pageable.class)))
                 .willReturn(List.of());
-        BDDMockito.given(problemRepository.search(isNull(), eq("A+B"), any(Pageable.class)))
+        BDDMockito.given(problemRepository.search(isNull(), eq("%a+b%"), any(Pageable.class)))
                 .willReturn(List.of(problem));
 
         // when
@@ -186,7 +186,7 @@ class ProblemServiceTest {
         Assertions.assertThat(result).hasSize(1);
         InOrder inOrder = inOrder(problemRepository);
         inOrder.verify(problemRepository).search(eq(1000), isNull(), any(Pageable.class));
-        inOrder.verify(problemRepository).search(isNull(), eq("A+B"), any(Pageable.class));
+        inOrder.verify(problemRepository).search(isNull(), eq("%a+b%"), any(Pageable.class));
     }
 
     @Test
@@ -202,7 +202,7 @@ class ProblemServiceTest {
     @DisplayName("문제 검색 서비스 - limit은 최대 10으로 제한된다")
     void search_clamps_limit_to_max() {
         // given
-        BDDMockito.given(problemRepository.search(isNull(), eq("AB"), any(Pageable.class)))
+        BDDMockito.given(problemRepository.search(isNull(), eq("%ab%"), any(Pageable.class)))
                 .willReturn(List.of());
 
         // when
@@ -210,7 +210,7 @@ class ProblemServiceTest {
 
         // then
         org.mockito.ArgumentCaptor<Pageable> captor = org.mockito.ArgumentCaptor.forClass(Pageable.class);
-        verify(problemRepository).search(isNull(), eq("AB"), captor.capture());
+        verify(problemRepository).search(isNull(), eq("%ab%"), captor.capture());
         Assertions.assertThat(captor.getValue().getPageSize()).isEqualTo(10);
     }
 }
