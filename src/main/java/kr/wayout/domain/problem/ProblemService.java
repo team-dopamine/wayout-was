@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -99,7 +100,7 @@ public class ProblemService {
                 return List.of();
             }
 
-            return problemRepository.search(null, fallbackTitleKeyword, pageable).stream()
+            return problemRepository.search(null, toLikeKeyword(fallbackTitleKeyword), pageable).stream()
                     .map(ProblemDto.Search::from)
                     .toList();
         }
@@ -108,9 +109,16 @@ public class ProblemService {
             return List.of();
         }
 
-        return problemRepository.search(null, titleKeyword, pageable).stream()
+        return problemRepository.search(null, toLikeKeyword(titleKeyword), pageable).stream()
                 .map(ProblemDto.Search::from)
                 .toList();
+    }
+
+    private String toLikeKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        return "%" + keyword.toLowerCase(Locale.ROOT) + "%";
     }
 
     private Integer parseProblemNoToken(String token) {
