@@ -4,9 +4,13 @@ import jakarta.validation.Valid;
 import kr.wayout.domain.solution.SolutionService;
 import kr.wayout.domain.solution.dto.SolutionDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,5 +31,16 @@ public class SolutionController implements SolutionApi {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(solutionService.create(email, dto));
+    }
+
+    @Override
+    @GetMapping("/me")
+    public ResponseEntity<?> listContributions(@AuthenticationPrincipal String email,
+                                               @PageableDefault(size = 8, sort = "createdAt",
+                                                       direction = Sort.Direction.DESC) Pageable pageable) {
+        if (email == null || "anonymousUser".equals(email)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(solutionService.listContributions(email, pageable));
     }
 }

@@ -8,6 +8,8 @@ import kr.wayout.domain.solution.dto.SolutionDto;
 import kr.wayout.global.exception.CustomBusinessException;
 import kr.wayout.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,5 +43,13 @@ public class SolutionService {
         solutionRepository.save(solution);
 
         return SolutionDto.CreateResponse.of("정답 코드 등록에 성공했습니다.");
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SolutionDto.ContributionResponse> listContributions(String email, Pageable pageable) {
+        Member member = memberService.read(email);
+
+        return solutionRepository.findAllByMemberIdWithProblem(member.getId(), pageable)
+                .map(SolutionDto.ContributionResponse::from);
     }
 }

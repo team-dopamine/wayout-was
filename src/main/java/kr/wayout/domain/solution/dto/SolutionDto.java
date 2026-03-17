@@ -2,11 +2,15 @@ package kr.wayout.domain.solution.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import kr.wayout.domain.problem.Platform;
+import kr.wayout.domain.solution.Solution;
 import kr.wayout.domain.submission.Language;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 public class SolutionDto {
 
@@ -37,6 +41,29 @@ public class SolutionDto {
         public static CreateResponse of(String message) {
             return CreateResponse.builder()
                     .message(message)
+                    .build();
+        }
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class ContributionResponse {
+        private Long problemId;
+        private Integer problemNo;
+        private Platform platform;
+        private String problemTitle;
+        private Language language;
+        private LocalDateTime submissionDate;
+
+        public static ContributionResponse from(Solution solution) {
+            return ContributionResponse.builder()
+                    .problemId(solution.getProblem().getId())
+                    .problemNo(solution.getProblem().getProblemNo())
+                    .platform(solution.getProblem().getPlatform())
+                    .problemTitle(solution.getProblem().getTitle())
+                    .language(solution.getLanguage())
+                    .submissionDate(solution.getCreatedAt())
                     .build();
         }
     }
