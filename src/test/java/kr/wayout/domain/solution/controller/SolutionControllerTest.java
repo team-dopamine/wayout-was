@@ -1,6 +1,7 @@
 package kr.wayout.domain.solution.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.wayout.domain.problem.Platform;
 import kr.wayout.domain.solution.SolutionService;
 import kr.wayout.domain.solution.dto.SolutionDto;
 import kr.wayout.domain.submission.Language;
@@ -11,17 +12,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -84,6 +90,45 @@ class SolutionControllerTest {
         mockMvc.perform(post("/solutions")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("내 정답 코드 기여 조회 API - 성공")
+    void listContributions_success() throws Exception {
+        // given
+        String email = "test@gmail.com";
+        setAuthentication(email);
+
+        SolutionDto.ContributionResponse item = SolutionDto.ContributionResponse.builder()
+                .problemId(1L)
+                .problemNo(1000)
+                .platform(Platform.SWEA)
+                .problemTitle("A+B")
+                .language(Language.JAVA)
+                .submissionDate(LocalDateTime.of(2026, 3, 17, 12, 0))
+                .build();
+
+        PageRequest pageable = PageRequest.of(0, 8);
+        given(solutionService.listContributions(any(), any()))
+                .willReturn(new PageImpl<>(List.of(item), pageable, 1));
+
+        // when & then
+        mockMvc.perform(get("/solutions/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].problemId").value(1))
+                .andExpect(jsonPath("$.content[0].problemNo").value(1000))
+                .andExpect(jsonPath("$.content[0].platform").value("SWEA"))
+                .andExpect(jsonPath("$.content[0].problemTitle").value("A+B"))
+                .andExpect(jsonPath("$.content[0].language").value("JAVA"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("내 정답 코드 기여 조회 API - 인증되지 않은 사용자")
+    void listContributions_unauthorized() throws Exception {
+        // when & then
+        mockMvc.perform(get("/solutions/me"))
                 .andExpect(status().isUnauthorized());
     }
 }
