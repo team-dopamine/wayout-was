@@ -43,4 +43,14 @@ public interface SubmissionApi {
 
     })
     ResponseEntity<?> listByProblem(@ParameterObject Pageable pageable, @Parameter(description = "문제 id값") Long problemId);
+
+    @Operation(summary = "특정 제출 기록에 대한 상세 조회 API", description = "특정 제출 기록에 대하여 사용자들의 제출 기록을 상세 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "제출 기록 상세 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SubmissionDto.Detail.class))),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 제출 기록입니다.")
+
+    })
+    ResponseEntity<?> detail(@Parameter(description = "제출 id값") Long submissionId);
 }

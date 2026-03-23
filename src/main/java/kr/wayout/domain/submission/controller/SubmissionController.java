@@ -40,4 +40,11 @@ public class SubmissionController implements SubmissionApi {
                                            @PathVariable Long problemId) {
         return ResponseEntity.ok(submissionService.listByProblemId(pageable, problemId));
     }
+
+    @Override
+    @GetMapping("/submissions/{submissionId}")
+    public ResponseEntity<?> detail(@PathVariable Long submissionId) {
+        return ResponseEntity.ok(submissionService.detail(submissionId));
+    }
+
 }

@@ -1,5 +1,8 @@
 package kr.wayout.domain.submission;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.wayout.domain.member.Member;
 import kr.wayout.domain.member.MemberService;
 import kr.wayout.domain.problem.Problem;
@@ -28,6 +31,7 @@ public class SubmissionService {
     private final ProblemRepository problemRepository;
     private final SubmissionRepository submissionRepository;
     private final CounterExampleRunner counterExampleRunner;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public SubmissionDto.CreateCounterExampleResponse createCounterExample(String email,
@@ -42,11 +46,16 @@ public class SubmissionService {
                 dto.getLanguage()
         );
 
+        JsonNode counterExamples = objectMapper.valueToTree(
+                result.getCounterExamples() == null ? List.of() : result.getCounterExamples()
+        );
+
         Submission submission = Submission.create(
                 member,
                 problem,
                 dto.getLanguage(),
                 dto.getSourceCode(),
+                counterExamples,
                 dto.getIsOpen(),
                 result.isFound(),
                 result.getExecutionTime()
@@ -82,8 +91,10 @@ public class SubmissionService {
                             submission.getMember() != null ? submission.getMember().getNickname() : "익명",
                             submission.getProblem().getTitle(),
                             submission.getLanguage(),
+                            submission.getProblem().getPlatform(),
                             submission.getExecutionTime(),
-                            submission.getCreatedAt()
+                            submission.getCreatedAt(),
+                            submission.getIsOpen()
                     );
                 })
                 .toList();
@@ -111,13 +122,47 @@ public class SubmissionService {
                             submission.getMember() != null ? submission.getMember().getNickname() : "익명",
                             problem.getTitle(),
                             submission.getLanguage(),
+                            problem.getPlatform(),
                             submission.getExecutionTime(),
-                            submission.getCreatedAt()
+                            submission.getCreatedAt(),
+                            submission.getIsOpen()
                     );
                 })
                 .toList();
-        
+
         return new PageImpl<>(content, pageable, page.getTotalElements());
+    }
+
+    @Transactional(readOnly = true)
+    public SubmissionDto.Detail detail(Long submissionId) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.SUBMISSION_NOT_FOUND));
+
+        if (!isDetailViewAllowed(submission)) {
+            throw new CustomBusinessException(ErrorCode.SUBMISSION_NOT_OPENED);
+        }
+
+        List<SubmissionDto.CounterExampleCase> counterExamples = List.of();
+        JsonNode counterExamplesNode = submission.getCounterExamples();
+        if (counterExamplesNode != null && !counterExamplesNode.isNull()) {
+            counterExamples = objectMapper.convertValue(
+                    counterExamplesNode,
+                    new TypeReference<List<SubmissionDto.CounterExampleCase>>() {
+                    }
+            );
+        }
+
+        return SubmissionDto.Detail.builder()
+                .id(submission.getId())
+                .problemNo(submission.getProblem().getProblemNo().longValue())
+                .title(submission.getProblem().getTitle())
+                .sourceCode(submission.getSourceCode())
+                .counterExamples(counterExamples)
+                .language(submission.getLanguage())
+                .platform(submission.getProblem().getPlatform())
+                .executionTime(submission.getExecutionTime())
+                .createdAt(submission.getCreatedAt())
+                .build();
     }
 
     private Member resolveMember(String email) {
@@ -126,6 +171,10 @@ public class SubmissionService {
         }
 
         return memberService.read(email);
+    }
+
+    private boolean isDetailViewAllowed(Submission submission) {
+        return Boolean.TRUE.equals(submission.getIsOpen());
     }
 
 }
