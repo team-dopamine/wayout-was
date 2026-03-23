@@ -1,6 +1,7 @@
 package kr.wayout.domain.submission.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.wayout.domain.problem.Platform;
 import kr.wayout.domain.submission.Language;
 import kr.wayout.domain.submission.SubmissionService;
 import kr.wayout.domain.submission.dto.SubmissionDto;
@@ -77,6 +78,7 @@ class SubmissionControllerTest {
                 .nickname("익명")
                 .title("A+B")
                 .language(Language.JAVA)
+                .platform(Platform.SWEA)
                 .executionTime(1.5)
                 .createdAt(LocalDateTime.of(2026, 3, 8, 12, 0))
                 .build();
@@ -91,6 +93,7 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.content[0].nickname").value("익명"))
                 .andExpect(jsonPath("$.content[0].title").value("A+B"))
                 .andExpect(jsonPath("$.content[0].language").value("JAVA"))
+                .andExpect(jsonPath("$.content[0].platform").value("SWEA"))
                 .andExpect(jsonPath("$.content[0].executionTime").value(1.5))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
@@ -104,6 +107,7 @@ class SubmissionControllerTest {
                 .nickname("Jsplix")
                 .title("A+B")
                 .language(Language.CPP)
+                .platform(Platform.SWEA)
                 .executionTime(0.7)
                 .createdAt(LocalDateTime.of(2026, 3, 10, 10, 0))
                 .build();
@@ -119,6 +123,7 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.content[0].nickname").value("Jsplix"))
                 .andExpect(jsonPath("$.content[0].title").value("A+B"))
                 .andExpect(jsonPath("$.content[0].language").value("CPP"))
+                .andExpect(jsonPath("$.content[0].platform").value("SWEA"))
                 .andExpect(jsonPath("$.content[0].executionTime").value(0.7))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
@@ -136,5 +141,72 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.code").value("B002"))
                 .andExpect(jsonPath("$.message").value("존재하지 않는 문제입니다."))
                 .andExpect(jsonPath("$.path").value("/problems/999/submissions"));
+    }
+
+    @Test
+    @DisplayName("제출 기록 상세 조회 API - 상세 정보를 반환한다")
+    void detail_success() throws Exception {
+        // given
+        SubmissionDto.CounterExampleCase counterExample = SubmissionDto.CounterExampleCase.builder()
+                .input("3\n1 2 3")
+                .expectedOutput("6")
+                .actualOutput("5")
+                .build();
+
+        SubmissionDto.Detail response = SubmissionDto.Detail.builder()
+                .id(1L)
+                .problemNo(1001L)
+                .title("A+B")
+                .sourceCode("public class Main {}")
+                .counterExamples(List.of(counterExample))
+                .language(Language.JAVA)
+                .executionTime(1.23)
+                .createdAt(LocalDateTime.of(2026, 3, 23, 11, 0))
+                .build();
+
+        given(submissionService.detail(1L)).willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/submissions/{submissionId}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.problemNo").value(1001))
+                .andExpect(jsonPath("$.title").value("A+B"))
+                .andExpect(jsonPath("$.sourceCode").value("public class Main {}"))
+                .andExpect(jsonPath("$.language").value("JAVA"))
+                .andExpect(jsonPath("$.executionTime").value(1.23))
+                .andExpect(jsonPath("$.counterExamples[0].input").value("3\n1 2 3"))
+                .andExpect(jsonPath("$.counterExamples[0].expectedOutput").value("6"))
+                .andExpect(jsonPath("$.counterExamples[0].actualOutput").value("5"));
+    }
+
+    @Test
+    @DisplayName("제출 기록 상세 조회 API - 존재하지 않는 제출이면 404를 반환한다")
+    void detail_not_found() throws Exception {
+        // given
+        given(submissionService.detail(999L))
+                .willThrow(new CustomBusinessException(ErrorCode.SUBMISSION_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(get("/submissions/{submissionId}", 999L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("B004"))
+                .andExpect(jsonPath("$.message").value("존재하지 않는 제출 기록입니다."))
+                .andExpect(jsonPath("$.path").value("/submissions/999"));
+    }
+
+    @Test
+    @DisplayName("제출 기록 상세 조회 API - 비공개 제출이면 403을 반환한다")
+    void detail_forbidden_when_not_opened() throws Exception {
+        // given
+        given(submissionService.detail(2L))
+                .willThrow(new CustomBusinessException(ErrorCode.SUBMISSION_NOT_OPENED));
+
+        // when & then
+        mockMvc.perform(get("/submissions/{submissionId}", 2L))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("B005"))
+                .andExpect(jsonPath("$.message").value("공개가 허용되지 않은 제출 기록입니다."))
+                .andExpect(jsonPath("$.path").value("/submissions/2"));
     }
 }
