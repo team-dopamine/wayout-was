@@ -2,6 +2,7 @@ package kr.wayout.domain.problem;
 
 import kr.wayout.domain.problem.dto.ProblemDto;
 import kr.wayout.domain.submission.SubmissionRepository;
+import kr.wayout.global.exception.CustomBusinessException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -102,6 +104,82 @@ class ProblemServiceTest {
         // then
         Assertions.assertThat(result.getContent()).isEmpty();
         Assertions.assertThat(result.getTotalElements()).isZero();
+        verify(submissionRepository, never()).countByProblemIds(anyList());
+    }
+
+    @Test
+    @DisplayName("문제 상세 조회 서비스 - 문제 정보와 제출 집계를 반환한다")
+    void detail_success_with_aggregation() {
+        // given
+        Problem problem = Mockito.mock(Problem.class);
+        BDDMockito.given(problem.getId()).willReturn(1L);
+        BDDMockito.given(problem.getProblemNo()).willReturn(1000);
+        BDDMockito.given(problem.getTitle()).willReturn("A+B");
+        BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
+
+        SubmissionRepository.SubmissionCountRow countRow = new SubmissionRepository.SubmissionCountRow() {
+            @Override
+            public Long getProblemId() {
+                return 1L;
+            }
+
+            @Override
+            public long getTotalSubmissions() {
+                return 12L;
+            }
+
+            @Override
+            public long getFoundSubmissions() {
+                return 3L;
+            }
+        };
+
+        BDDMockito.given(problemRepository.findById(1L)).willReturn(Optional.of(problem));
+        BDDMockito.given(submissionRepository.countByProblemIds(List.of(1L))).willReturn(List.of(countRow));
+
+        // when
+        ProblemDto.Detail result = problemService.detail(1L);
+
+        // then
+        Assertions.assertThat(result.getProblemId()).isEqualTo(1L);
+        Assertions.assertThat(result.getProblemNo()).isEqualTo(1000);
+        Assertions.assertThat(result.getTitle()).isEqualTo("A+B");
+        Assertions.assertThat(result.getPlatform()).isEqualTo(Platform.SWEA);
+        Assertions.assertThat(result.getTotalSubmissions()).isEqualTo(12L);
+        Assertions.assertThat(result.getFoundSubmissions()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("문제 상세 조회 서비스 - 제출이 없으면 집계를 0으로 반환한다")
+    void detail_success_without_submission() {
+        // given
+        Problem problem = Mockito.mock(Problem.class);
+        BDDMockito.given(problem.getId()).willReturn(2L);
+        BDDMockito.given(problem.getProblemNo()).willReturn(2000);
+        BDDMockito.given(problem.getTitle()).willReturn("B+C");
+        BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
+
+        BDDMockito.given(problemRepository.findById(2L)).willReturn(Optional.of(problem));
+        BDDMockito.given(submissionRepository.countByProblemIds(List.of(2L))).willReturn(List.of());
+
+        // when
+        ProblemDto.Detail result = problemService.detail(2L);
+
+        // then
+        Assertions.assertThat(result.getTotalSubmissions()).isZero();
+        Assertions.assertThat(result.getFoundSubmissions()).isZero();
+    }
+
+    @Test
+    @DisplayName("문제 상세 조회 서비스 - 존재하지 않는 문제면 예외를 던진다")
+    void detail_throws_when_problem_not_found() {
+        // given
+        BDDMockito.given(problemRepository.findById(999L)).willReturn(Optional.empty());
+
+        // when & then
+        Assertions.assertThatThrownBy(() -> problemService.detail(999L))
+                .isInstanceOf(CustomBusinessException.class)
+                .hasMessage("존재하지 않는 문제입니다.");
         verify(submissionRepository, never()).countByProblemIds(anyList());
     }
 
