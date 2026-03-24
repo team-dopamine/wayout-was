@@ -2,6 +2,7 @@ package kr.wayout.domain.submission.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import kr.wayout.domain.problem.Platform;
 import kr.wayout.domain.submission.Language;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -60,6 +61,25 @@ public class SubmissionDto {
         private String nickname;
         private String title;
         private Language language;
+        private Platform platform;
+        private Double executionTime;
+        private int counterExampleCount;
+        private LocalDateTime createdAt;
+        private boolean isOpen;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class Detail {
+        private Long id;
+        private Long problemNo;
+        private String title;
+        private String sourceCode;
+        private int counterExampleCount;
+        private List<CounterExampleCase> counterExamples;
+        private Language language;
+        private Platform platform;
         private Double executionTime;
         private LocalDateTime createdAt;
     }

@@ -1,5 +1,6 @@
 package kr.wayout.domain.submission;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,7 +15,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Getter
@@ -35,6 +38,10 @@ public class Submission extends BaseEntity {
     @Column(name = "source_code", columnDefinition = "TEXT", nullable = false)
     private String sourceCode;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "counter_examples", columnDefinition = "JSONB")
+    private JsonNode counterExamples;
+
     @Column(name = "is_open", nullable = false)
     private Boolean isOpen = true;
 
@@ -51,6 +58,7 @@ public class Submission extends BaseEntity {
                       Double executionTime,
                       Boolean isFound,
                       String sourceCode,
+                      JsonNode counterExamples,
                       Boolean isOpen,
                       Member member,
                       Problem problem) {
@@ -58,6 +66,7 @@ public class Submission extends BaseEntity {
         this.executionTime = executionTime;
         this.isFound = isFound;
         this.sourceCode = sourceCode;
+        this.counterExamples = counterExamples;
         this.isOpen = isOpen;
         this.member = member;
         this.problem = problem;
@@ -67,6 +76,7 @@ public class Submission extends BaseEntity {
                                     Problem problem,
                                     Language language,
                                     String sourceCode,
+                                    JsonNode counterExamples,
                                     Boolean isOpen,
                                     boolean isFound,
                                     Double executionTime) {
@@ -75,6 +85,7 @@ public class Submission extends BaseEntity {
                 .problem(problem)
                 .language(language)
                 .sourceCode(sourceCode)
+                .counterExamples(counterExamples)
                 .isOpen(isOpen)
                 .isFound(isFound)
                 .executionTime(executionTime)
