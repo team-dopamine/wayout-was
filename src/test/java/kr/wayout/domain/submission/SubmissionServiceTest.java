@@ -64,6 +64,7 @@ class SubmissionServiceTest {
         Problem secondProblem = Mockito.mock(Problem.class);
         Submission firstSubmission = Mockito.mock(Submission.class);
         Submission secondSubmission = Mockito.mock(Submission.class);
+        JsonNode firstCounterExamples = Mockito.mock(JsonNode.class);
 
         LocalDateTime firstCreatedAt = LocalDateTime.of(2026, 3, 8, 12, 0);
         LocalDateTime secondCreatedAt = LocalDateTime.of(2026, 3, 8, 12, 30);
@@ -79,6 +80,9 @@ class SubmissionServiceTest {
         BDDMockito.given(firstSubmission.getProblem()).willReturn(firstProblem);
         BDDMockito.given(firstSubmission.getLanguage()).willReturn(Language.JAVA);
         BDDMockito.given(firstSubmission.getExecutionTime()).willReturn(1.5);
+        BDDMockito.given(firstSubmission.getCounterExamples()).willReturn(firstCounterExamples);
+        BDDMockito.given(firstCounterExamples.isNull()).willReturn(false);
+        BDDMockito.given(firstCounterExamples.size()).willReturn(2);
         BDDMockito.given(firstSubmission.getCreatedAt()).willReturn(firstCreatedAt);
         BDDMockito.given(firstSubmission.getIsOpen()).willReturn(true);
 
@@ -87,6 +91,7 @@ class SubmissionServiceTest {
         BDDMockito.given(secondSubmission.getProblem()).willReturn(secondProblem);
         BDDMockito.given(secondSubmission.getLanguage()).willReturn(Language.PYTHON);
         BDDMockito.given(secondSubmission.getExecutionTime()).willReturn(2.3);
+        BDDMockito.given(secondSubmission.getCounterExamples()).willReturn(null);
         BDDMockito.given(secondSubmission.getCreatedAt()).willReturn(secondCreatedAt);
         BDDMockito.given(secondSubmission.getIsOpen()).willReturn(false);
 
@@ -107,6 +112,7 @@ class SubmissionServiceTest {
         Assertions.assertThat(first.getLanguage()).isEqualTo(Language.JAVA);
         Assertions.assertThat(first.getPlatform()).isEqualTo(Platform.SWEA);
         Assertions.assertThat(first.getExecutionTime()).isEqualTo(1.5);
+        Assertions.assertThat(first.getCounterExampleCount()).isEqualTo(2);
         Assertions.assertThat(first.getCreatedAt()).isEqualTo(firstCreatedAt);
 
         SubmissionDto.ListResponse second = result.getContent().get(1);
@@ -116,6 +122,7 @@ class SubmissionServiceTest {
         Assertions.assertThat(second.getLanguage()).isEqualTo(Language.PYTHON);
         Assertions.assertThat(second.getPlatform()).isEqualTo(Platform.SWEA);
         Assertions.assertThat(second.getExecutionTime()).isEqualTo(2.3);
+        Assertions.assertThat(second.getCounterExampleCount()).isZero();
         Assertions.assertThat(second.getCreatedAt()).isEqualTo(secondCreatedAt);
 
         verifyNoInteractions(memberService, problemRepository, counterExampleRunner);
@@ -148,6 +155,7 @@ class SubmissionServiceTest {
         Problem problem = Mockito.mock(Problem.class);
         Member member = Mockito.mock(Member.class);
         Submission submission = Mockito.mock(Submission.class);
+        JsonNode counterExamplesNode = Mockito.mock(JsonNode.class);
         LocalDateTime createdAt = LocalDateTime.of(2026, 3, 10, 10, 0);
 
         BDDMockito.given(problemRepository.findProblemById(problemId)).willReturn(problem);
@@ -158,6 +166,9 @@ class SubmissionServiceTest {
         BDDMockito.given(submission.getMember()).willReturn(member);
         BDDMockito.given(submission.getLanguage()).willReturn(Language.CPP);
         BDDMockito.given(submission.getExecutionTime()).willReturn(0.7);
+        BDDMockito.given(submission.getCounterExamples()).willReturn(counterExamplesNode);
+        BDDMockito.given(counterExamplesNode.isNull()).willReturn(false);
+        BDDMockito.given(counterExamplesNode.size()).willReturn(1);
         BDDMockito.given(submission.getCreatedAt()).willReturn(createdAt);
         BDDMockito.given(submission.getIsOpen()).willReturn(true);
 
@@ -178,6 +189,7 @@ class SubmissionServiceTest {
         Assertions.assertThat(item.getLanguage()).isEqualTo(Language.CPP);
         Assertions.assertThat(item.getPlatform()).isEqualTo(Platform.SWEA);
         Assertions.assertThat(item.getExecutionTime()).isEqualTo(0.7);
+        Assertions.assertThat(item.getCounterExampleCount()).isEqualTo(1);
         Assertions.assertThat(item.getCreatedAt()).isEqualTo(createdAt);
 
         verifyNoInteractions(memberService, counterExampleRunner);

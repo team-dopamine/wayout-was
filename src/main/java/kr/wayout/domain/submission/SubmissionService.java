@@ -93,6 +93,7 @@ public class SubmissionService {
                             submission.getLanguage(),
                             submission.getProblem().getPlatform(),
                             submission.getExecutionTime(),
+                            countCounterExamples(submission),
                             submission.getCreatedAt(),
                             submission.getIsOpen()
                     );
@@ -124,6 +125,7 @@ public class SubmissionService {
                             submission.getLanguage(),
                             problem.getPlatform(),
                             submission.getExecutionTime(),
+                            countCounterExamples(submission),
                             submission.getCreatedAt(),
                             submission.getIsOpen()
                     );
@@ -176,6 +178,15 @@ public class SubmissionService {
 
     private boolean isDetailViewAllowed(Submission submission) {
         return Boolean.TRUE.equals(submission.getIsOpen());
+    }
+
+    private int countCounterExamples(Submission submission) {
+        JsonNode counterExamplesNode = submission.getCounterExamples();
+        if (counterExamplesNode == null || counterExamplesNode.isNull()) {
+            return 0;
+        }
+
+        return counterExamplesNode.size();
     }
 
 }

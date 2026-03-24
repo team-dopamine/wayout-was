@@ -80,6 +80,7 @@ class SubmissionControllerTest {
                 .language(Language.JAVA)
                 .platform(Platform.SWEA)
                 .executionTime(1.5)
+                .counterExampleCount(2)
                 .createdAt(LocalDateTime.of(2026, 3, 8, 12, 0))
                 .build();
 
@@ -95,6 +96,7 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.content[0].language").value("JAVA"))
                 .andExpect(jsonPath("$.content[0].platform").value("SWEA"))
                 .andExpect(jsonPath("$.content[0].executionTime").value(1.5))
+                .andExpect(jsonPath("$.content[0].counterExampleCount").value(2))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 
@@ -109,6 +111,7 @@ class SubmissionControllerTest {
                 .language(Language.CPP)
                 .platform(Platform.SWEA)
                 .executionTime(0.7)
+                .counterExampleCount(1)
                 .createdAt(LocalDateTime.of(2026, 3, 10, 10, 0))
                 .build();
 
@@ -125,6 +128,7 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.content[0].language").value("CPP"))
                 .andExpect(jsonPath("$.content[0].platform").value("SWEA"))
                 .andExpect(jsonPath("$.content[0].executionTime").value(0.7))
+                .andExpect(jsonPath("$.content[0].counterExampleCount").value(1))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 

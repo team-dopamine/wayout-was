@@ -63,6 +63,7 @@ public class SubmissionDto {
         private Language language;
         private Platform platform;
         private Double executionTime;
+        private int counterExampleCount;
         private LocalDateTime createdAt;
         private boolean isOpen;
     }
