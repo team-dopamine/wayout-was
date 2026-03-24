@@ -40,4 +40,17 @@ public class ProblemDto {
 
     }
 
+    @Getter
+    @AllArgsConstructor
+    public static class Detail {
+
+        private Long problemId;
+        private Integer problemNo;
+        private String title;
+        private Platform platform;
+        private long totalSubmissions;
+        private long foundSubmissions;
+
+    }
+
 }

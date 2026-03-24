@@ -2,6 +2,8 @@ package kr.wayout.domain.problem;
 
 import kr.wayout.domain.problem.dto.ProblemDto;
 import kr.wayout.domain.submission.SubmissionRepository;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
@@ -112,6 +114,24 @@ public class ProblemService {
         return problemRepository.search(null, toLikeKeyword(titleKeyword), pageable).stream()
                 .map(ProblemDto.Search::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ProblemDto.Detail detail(Long problemId) {
+        Problem problem = problemRepository.findById(problemId)
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.PROBLEM_NOT_FOUND));
+
+        SubmissionAgg agg = toAggMap(List.of(problemId))
+                .getOrDefault(problemId, SubmissionAgg.ZERO);
+
+        return new ProblemDto.Detail(
+                problem.getId(),
+                problem.getProblemNo(),
+                problem.getTitle(),
+                problem.getPlatform(),
+                agg.total,
+                agg.found
+        );
     }
 
     private String toLikeKeyword(String keyword) {
