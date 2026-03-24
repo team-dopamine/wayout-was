@@ -4,6 +4,8 @@ import kr.wayout.domain.problem.Platform;
 import kr.wayout.domain.problem.ProblemService;
 import kr.wayout.domain.problem.dto.ProblemDto;
 import kr.wayout.global.auth.jwt.JwtProvider;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,5 +113,40 @@ class ProblemControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("V001"))
                 .andExpect(jsonPath("$.message").value("limit은 1 이상이어야 합니다."));
+    }
+
+    @Test
+    @DisplayName("문제 상세 조회 API - 문제 정보와 제출 집계를 반환한다")
+    void detail_success() throws Exception {
+        // given
+        ProblemDto.Detail detail = new ProblemDto.Detail(
+                1L, 1000, "A+B", Platform.SWEA, 12L, 3L
+        );
+        given(problemService.detail(1L)).willReturn(detail);
+
+        // when & then
+        mockMvc.perform(get("/problems/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$.problemId").value(1))
+                .andExpect(jsonPath("$.problemNo").value(1000))
+                .andExpect(jsonPath("$.title").value("A+B"))
+                .andExpect(jsonPath("$.platform").value("SWEA"))
+                .andExpect(jsonPath("$.totalSubmissions").value(12))
+                .andExpect(jsonPath("$.foundSubmissions").value(3));
+    }
+
+    @Test
+    @DisplayName("문제 상세 조회 API - 존재하지 않는 문제면 404를 반환한다")
+    void detail_not_found() throws Exception {
+        // given
+        given(problemService.detail(999L))
+                .willThrow(new CustomBusinessException(ErrorCode.PROBLEM_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(get("/problems/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("B002"))
+                .andExpect(jsonPath("$.message").value("존재하지 않는 문제입니다."));
     }
 }

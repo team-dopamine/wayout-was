@@ -36,4 +36,13 @@ public interface ProblemApi {
             @Parameter(description = "반환 개수 (기본 10, 최대 10)") Integer limit
     );
 
+    @Operation(summary = "문제 상세 조회 API", description = "특정 문제의 기본 정보와 제출 집계 정보를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "문제 상세 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ProblemDto.Detail.class))),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 문제입니다.")
+    })
+    ResponseEntity<?> detail(@Parameter(description = "문제 id값") Long problemId);
+
 }
