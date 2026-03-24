@@ -158,6 +158,7 @@ class SubmissionControllerTest {
                 .problemNo(1001L)
                 .title("A+B")
                 .sourceCode("public class Main {}")
+                .counterExampleCount(1)
                 .counterExamples(List.of(counterExample))
                 .language(Language.JAVA)
                 .executionTime(1.23)
@@ -175,6 +176,7 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.sourceCode").value("public class Main {}"))
                 .andExpect(jsonPath("$.language").value("JAVA"))
                 .andExpect(jsonPath("$.executionTime").value(1.23))
+                .andExpect(jsonPath("$.counterExampleCount").value(1))
                 .andExpect(jsonPath("$.counterExamples[0].input").value("3\n1 2 3"))
                 .andExpect(jsonPath("$.counterExamples[0].expectedOutput").value("6"))
                 .andExpect(jsonPath("$.counterExamples[0].actualOutput").value("5"));

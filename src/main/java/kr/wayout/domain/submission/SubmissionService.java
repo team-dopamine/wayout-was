@@ -157,6 +157,7 @@ public class SubmissionService {
                 .problemNo(submission.getProblem().getProblemNo().longValue())
                 .title(submission.getProblem().getTitle())
                 .sourceCode(submission.getSourceCode())
+                .counterExampleCount(counterExamples.size())
                 .counterExamples(counterExamples)
                 .language(submission.getLanguage())
                 .platform(submission.getProblem().getPlatform())

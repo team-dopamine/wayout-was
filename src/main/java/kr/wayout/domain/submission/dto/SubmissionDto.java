@@ -75,6 +75,7 @@ public class SubmissionDto {
         private Long problemNo;
         private String title;
         private String sourceCode;
+        private int counterExampleCount;
         private List<CounterExampleCase> counterExamples;
         private Language language;
         private Platform platform;

@@ -1,5 +1,7 @@
 package kr.wayout.domain.submission;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.wayout.domain.member.Member;
 import kr.wayout.domain.member.MemberService;
@@ -26,6 +28,7 @@ import org.springframework.data.domain.PageRequest;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -218,5 +221,83 @@ class SubmissionServiceTest {
 
         // then
         verifyNoInteractions(memberService, submissionRepository, counterExampleRunner);
+    }
+
+    @Test
+    @DisplayName("제출 상세 조회 서비스 - 반례 목록이 있으면 카운트를 계산해 반환한다")
+    void detail_success_with_counter_example_count() {
+        // given
+        Long submissionId = 1L;
+        LocalDateTime createdAt = LocalDateTime.of(2026, 3, 24, 10, 0);
+
+        Submission submission = Mockito.mock(Submission.class);
+        Problem problem = Mockito.mock(Problem.class);
+        JsonNode counterExamplesNode = Mockito.mock(JsonNode.class);
+        SubmissionDto.CounterExampleCase counterExample = SubmissionDto.CounterExampleCase.builder()
+                .input("3\n1 2 3")
+                .expectedOutput("6")
+                .actualOutput("5")
+                .build();
+
+        BDDMockito.given(submissionRepository.findById(submissionId)).willReturn(Optional.of(submission));
+        BDDMockito.given(submission.getIsOpen()).willReturn(true);
+        BDDMockito.given(submission.getCounterExamples()).willReturn(counterExamplesNode);
+        BDDMockito.given(counterExamplesNode.isNull()).willReturn(false);
+        BDDMockito.given(submission.getId()).willReturn(submissionId);
+        BDDMockito.given(submission.getProblem()).willReturn(problem);
+        BDDMockito.given(problem.getProblemNo()).willReturn(1001);
+        BDDMockito.given(problem.getTitle()).willReturn("A+B");
+        BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
+        BDDMockito.given(submission.getSourceCode()).willReturn("public class Main {}");
+        BDDMockito.given(submission.getLanguage()).willReturn(Language.JAVA);
+        BDDMockito.given(submission.getExecutionTime()).willReturn(1.23);
+        BDDMockito.given(submission.getCreatedAt()).willReturn(createdAt);
+        Mockito.doReturn(List.of(counterExample))
+                .when(objectMapper)
+                .convertValue(Mockito.eq(counterExamplesNode), Mockito.any(TypeReference.class));
+
+        // when
+        SubmissionDto.Detail result = submissionService.detail(submissionId);
+
+        // then
+        Assertions.assertThat(result.getId()).isEqualTo(1L);
+        Assertions.assertThat(result.getProblemNo()).isEqualTo(1001L);
+        Assertions.assertThat(result.getCounterExampleCount()).isEqualTo(1);
+        Assertions.assertThat(result.getCounterExamples()).hasSize(1);
+        Assertions.assertThat(result.getCounterExamples().get(0).getInput()).isEqualTo("3\n1 2 3");
+        Assertions.assertThat(result.getCounterExamples().get(0).getExpectedOutput()).isEqualTo("6");
+        Assertions.assertThat(result.getCounterExamples().get(0).getActualOutput()).isEqualTo("5");
+    }
+
+    @Test
+    @DisplayName("제출 상세 조회 서비스 - 반례 JSON이 없으면 카운트 0과 빈 목록을 반환한다")
+    void detail_success_with_empty_counter_examples_when_json_is_null() {
+        // given
+        Long submissionId = 1L;
+        LocalDateTime createdAt = LocalDateTime.of(2026, 3, 24, 10, 0);
+
+        Submission submission = Mockito.mock(Submission.class);
+        Problem problem = Mockito.mock(Problem.class);
+
+        BDDMockito.given(submissionRepository.findById(submissionId)).willReturn(Optional.of(submission));
+        BDDMockito.given(submission.getIsOpen()).willReturn(true);
+        BDDMockito.given(submission.getCounterExamples()).willReturn(null);
+        BDDMockito.given(submission.getId()).willReturn(submissionId);
+        BDDMockito.given(submission.getProblem()).willReturn(problem);
+        BDDMockito.given(problem.getProblemNo()).willReturn(1001);
+        BDDMockito.given(problem.getTitle()).willReturn("A+B");
+        BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
+        BDDMockito.given(submission.getSourceCode()).willReturn("public class Main {}");
+        BDDMockito.given(submission.getLanguage()).willReturn(Language.JAVA);
+        BDDMockito.given(submission.getExecutionTime()).willReturn(1.23);
+        BDDMockito.given(submission.getCreatedAt()).willReturn(createdAt);
+
+        // when
+        SubmissionDto.Detail result = submissionService.detail(submissionId);
+
+        // then
+        Assertions.assertThat(result.getCounterExampleCount()).isZero();
+        Assertions.assertThat(result.getCounterExamples()).isEmpty();
+        verifyNoInteractions(objectMapper);
     }
 }
