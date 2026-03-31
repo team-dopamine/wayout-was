@@ -1,0 +1,12 @@
+.git
+.github
+.gradle
+.idea
+build/*
+!build/libs/
+build/libs/*
+!build/libs/*.jar
+node_modules
+npm-debug.log
+README.md
+docs
