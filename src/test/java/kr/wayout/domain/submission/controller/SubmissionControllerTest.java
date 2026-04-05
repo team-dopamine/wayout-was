@@ -75,6 +75,7 @@ class SubmissionControllerTest {
         // given
         SubmissionDto.ListResponse item = SubmissionDto.ListResponse.builder()
                 .id(1L)
+                .problemNo(1001)
                 .nickname("익명")
                 .title("A+B")
                 .language(Language.JAVA)
@@ -91,6 +92,7 @@ class SubmissionControllerTest {
         mockMvc.perform(get("/submissions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].problemNo").value(1001))
                 .andExpect(jsonPath("$.content[0].nickname").value("익명"))
                 .andExpect(jsonPath("$.content[0].title").value("A+B"))
                 .andExpect(jsonPath("$.content[0].language").value("JAVA"))
@@ -106,6 +108,7 @@ class SubmissionControllerTest {
         // given
         SubmissionDto.ListResponse item = SubmissionDto.ListResponse.builder()
                 .id(10L)
+                .problemNo(1001)
                 .nickname("Jsplix")
                 .title("A+B")
                 .language(Language.CPP)
@@ -123,6 +126,7 @@ class SubmissionControllerTest {
         mockMvc.perform(get("/problems/{problemId}/submissions", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(10))
+                .andExpect(jsonPath("$.content[0].problemNo").value(1001))
                 .andExpect(jsonPath("$.content[0].nickname").value("Jsplix"))
                 .andExpect(jsonPath("$.content[0].title").value("A+B"))
                 .andExpect(jsonPath("$.content[0].language").value("CPP"))
