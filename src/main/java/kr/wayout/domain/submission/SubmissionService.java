@@ -88,6 +88,7 @@ public class SubmissionService {
                 .map(submission -> {
                     return new SubmissionDto.ListResponse(
                             submission.getId(),
+                            submission.getProblem().getProblemNo(),
                             submission.getMember() != null ? submission.getMember().getNickname() : "익명",
                             submission.getProblem().getTitle(),
                             submission.getLanguage(),
@@ -120,6 +121,7 @@ public class SubmissionService {
                 .map(submission -> {
                     return new SubmissionDto.ListResponse(
                             submission.getId(),
+                            submission.getProblem().getProblemNo(),
                             submission.getMember() != null ? submission.getMember().getNickname() : "익명",
                             problem.getTitle(),
                             submission.getLanguage(),
