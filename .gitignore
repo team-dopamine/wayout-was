@@ -7,6 +7,7 @@ build/
 src/main/resources/application.yml
 .gradle-home/
 docs
+.codex
 
 ### STS ###
 .apt_generated

@@ -70,8 +70,10 @@ class SubmissionServiceTest {
         LocalDateTime secondCreatedAt = LocalDateTime.of(2026, 3, 8, 12, 30);
 
         BDDMockito.given(member.getNickname()).willReturn("Jsplix");
+        BDDMockito.given(firstProblem.getProblemNo()).willReturn(1001);
         BDDMockito.given(firstProblem.getTitle()).willReturn("A+B");
         BDDMockito.given(firstProblem.getPlatform()).willReturn(Platform.SWEA);
+        BDDMockito.given(secondProblem.getProblemNo()).willReturn(1002);
         BDDMockito.given(secondProblem.getTitle()).willReturn("최대값 찾기");
         BDDMockito.given(secondProblem.getPlatform()).willReturn(Platform.SWEA);
 
@@ -107,6 +109,7 @@ class SubmissionServiceTest {
 
         SubmissionDto.ListResponse first = result.getContent().get(0);
         Assertions.assertThat(first.getId()).isEqualTo(1L);
+        Assertions.assertThat(first.getProblemNo()).isEqualTo(1001);
         Assertions.assertThat(first.getNickname()).isEqualTo("Jsplix");
         Assertions.assertThat(first.getTitle()).isEqualTo("A+B");
         Assertions.assertThat(first.getLanguage()).isEqualTo(Language.JAVA);
@@ -117,6 +120,7 @@ class SubmissionServiceTest {
 
         SubmissionDto.ListResponse second = result.getContent().get(1);
         Assertions.assertThat(second.getId()).isEqualTo(2L);
+        Assertions.assertThat(second.getProblemNo()).isEqualTo(1002);
         Assertions.assertThat(second.getNickname()).isEqualTo("익명");
         Assertions.assertThat(second.getTitle()).isEqualTo("최대값 찾기");
         Assertions.assertThat(second.getLanguage()).isEqualTo(Language.PYTHON);
@@ -159,11 +163,13 @@ class SubmissionServiceTest {
         LocalDateTime createdAt = LocalDateTime.of(2026, 3, 10, 10, 0);
 
         BDDMockito.given(problemRepository.findProblemById(problemId)).willReturn(problem);
+        BDDMockito.given(problem.getProblemNo()).willReturn(1001);
         BDDMockito.given(problem.getTitle()).willReturn("A+B");
         BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
         BDDMockito.given(member.getNickname()).willReturn("Jsplix");
         BDDMockito.given(submission.getId()).willReturn(10L);
         BDDMockito.given(submission.getMember()).willReturn(member);
+        BDDMockito.given(submission.getProblem()).willReturn(problem);
         BDDMockito.given(submission.getLanguage()).willReturn(Language.CPP);
         BDDMockito.given(submission.getExecutionTime()).willReturn(0.7);
         BDDMockito.given(submission.getCounterExamples()).willReturn(counterExamplesNode);
@@ -184,6 +190,7 @@ class SubmissionServiceTest {
 
         SubmissionDto.ListResponse item = result.getContent().get(0);
         Assertions.assertThat(item.getId()).isEqualTo(10L);
+        Assertions.assertThat(item.getProblemNo()).isEqualTo(1001);
         Assertions.assertThat(item.getNickname()).isEqualTo("Jsplix");
         Assertions.assertThat(item.getTitle()).isEqualTo("A+B");
         Assertions.assertThat(item.getLanguage()).isEqualTo(Language.CPP);

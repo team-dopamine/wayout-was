@@ -58,6 +58,7 @@ public class SubmissionDto {
     @AllArgsConstructor
     public static class ListResponse {
         private Long id;
+        private Integer problemNo;
         private String nickname;
         private String title;
         private Language language;
