@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +40,16 @@ public class SubmissionController implements SubmissionApi {
     public ResponseEntity<?> listByProblem(@PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
                                            @PathVariable Long problemId) {
         return ResponseEntity.ok(submissionService.listByProblemId(pageable, problemId));
+    }
+
+    @Override
+    @GetMapping("/submissions/me")
+    public ResponseEntity<?> listMine(@AuthenticationPrincipal String email,
+                                      @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        if (email == null || "anonymousUser".equals(email)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(submissionService.listMine(email, pageable));
     }
 
     @Override
