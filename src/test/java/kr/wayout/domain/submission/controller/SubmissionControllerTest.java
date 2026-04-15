@@ -8,6 +8,7 @@ import kr.wayout.domain.submission.dto.SubmissionDto;
 import kr.wayout.global.exception.CustomBusinessException;
 import kr.wayout.global.exception.ErrorCode;
 import kr.wayout.global.auth.jwt.JwtProvider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +16,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -46,6 +50,17 @@ class SubmissionControllerTest {
 
     @MockitoBean
     private JwtProvider jwtProvider;
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private void setAuthentication(String email) {
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
 
     @Test
     @DisplayName("반례 탐색 요청 API - 익명 사용자도 호출 가능")
@@ -149,6 +164,51 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.code").value("B002"))
                 .andExpect(jsonPath("$.message").value("존재하지 않는 문제입니다."))
                 .andExpect(jsonPath("$.path").value("/problems/999/submissions"));
+    }
+
+    @Test
+    @DisplayName("내 제출 목록 조회 API - 내 제출 이력을 페이지 형태로 반환한다")
+    void list_mine_success() throws Exception {
+        // given
+        String email = "test@gmail.com";
+        setAuthentication(email);
+
+        SubmissionDto.ListResponse item = SubmissionDto.ListResponse.builder()
+                .id(31L)
+                .problemNo(1200)
+                .nickname("Jsplix")
+                .title("부분 수열의 합")
+                .language(Language.JAVA)
+                .platform(Platform.SWEA)
+                .executionTime(0.13)
+                .counterExampleCount(3)
+                .createdAt(LocalDateTime.of(2026, 4, 16, 9, 30))
+                .build();
+
+        PageRequest pageable = PageRequest.of(0, 8);
+        given(submissionService.listMine(eq(email), any()))
+                .willReturn(new PageImpl<>(List.of(item), pageable, 1));
+
+        // when & then
+        mockMvc.perform(get("/submissions/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(31))
+                .andExpect(jsonPath("$.content[0].problemNo").value(1200))
+                .andExpect(jsonPath("$.content[0].nickname").value("Jsplix"))
+                .andExpect(jsonPath("$.content[0].title").value("부분 수열의 합"))
+                .andExpect(jsonPath("$.content[0].language").value("JAVA"))
+                .andExpect(jsonPath("$.content[0].platform").value("SWEA"))
+                .andExpect(jsonPath("$.content[0].executionTime").value(0.13))
+                .andExpect(jsonPath("$.content[0].counterExampleCount").value(3))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("내 제출 목록 조회 API - 인증되지 않은 사용자면 401을 반환한다")
+    void list_mine_unauthorized() throws Exception {
+        // when & then
+        mockMvc.perform(get("/submissions/me"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
