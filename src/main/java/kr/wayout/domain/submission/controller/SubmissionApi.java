@@ -44,6 +44,16 @@ public interface SubmissionApi {
     })
     ResponseEntity<?> listByProblem(@ParameterObject Pageable pageable, @Parameter(description = "문제 id값") Long problemId);
 
+    @Operation(summary = "내 제출 목록 조회 API", description = "로그인한 사용자의 제출 기록을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "제출 기록 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SubmissionDto.ListResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다.")
+
+    })
+    ResponseEntity<?> listMine(String email, @ParameterObject Pageable pageable);
+
     @Operation(summary = "특정 제출 기록에 대한 상세 조회 API", description = "특정 제출 기록에 대하여 사용자들의 제출 기록을 상세 조회합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "제출 기록 상세 조회 성공",

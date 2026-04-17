@@ -78,30 +78,7 @@ public class SubmissionService {
     public Page<SubmissionDto.ListResponse> list(Pageable pageable) {
 
         Page<Submission> page = submissionRepository.findAll(pageable);
-
-        List<Submission> submissions = page.getContent();
-        if (submissions.isEmpty()) {
-            return new PageImpl<>(List.of(), pageable, page.getTotalElements());
-        }
-
-        List<SubmissionDto.ListResponse> content = submissions.stream()
-                .map(submission -> {
-                    return new SubmissionDto.ListResponse(
-                            submission.getId(),
-                            submission.getProblem().getProblemNo(),
-                            submission.getMember() != null ? submission.getMember().getNickname() : "익명",
-                            submission.getProblem().getTitle(),
-                            submission.getLanguage(),
-                            submission.getProblem().getPlatform(),
-                            submission.getExecutionTime(),
-                            countCounterExamples(submission),
-                            submission.getCreatedAt(),
-                            submission.getIsOpen()
-                    );
-                })
-                .toList();
-
-        return new PageImpl<>(content, pageable, page.getTotalElements());
+        return mapListResponses(page, pageable);
     }
 
     public Page<SubmissionDto.ListResponse> listByProblemId(Pageable pageable, Long problemId) {
@@ -112,29 +89,14 @@ public class SubmissionService {
         }
 
         Page<Submission> page = submissionRepository.findAllByProblem(pageable, problem);
-        List<Submission> submissions = page.getContent();
-        if (submissions.isEmpty()) {
-            return new PageImpl<>(List.of(), pageable, page.getTotalElements());
-        }
+        return mapListResponses(page, pageable);
+    }
 
-        List<SubmissionDto.ListResponse> content = submissions.stream()
-                .map(submission -> {
-                    return new SubmissionDto.ListResponse(
-                            submission.getId(),
-                            submission.getProblem().getProblemNo(),
-                            submission.getMember() != null ? submission.getMember().getNickname() : "익명",
-                            problem.getTitle(),
-                            submission.getLanguage(),
-                            problem.getPlatform(),
-                            submission.getExecutionTime(),
-                            countCounterExamples(submission),
-                            submission.getCreatedAt(),
-                            submission.getIsOpen()
-                    );
-                })
-                .toList();
-
-        return new PageImpl<>(content, pageable, page.getTotalElements());
+    @Transactional(readOnly = true)
+    public Page<SubmissionDto.ListResponse> listMine(String email, Pageable pageable) {
+        Member member = memberService.read(email);
+        Page<Submission> page = submissionRepository.findAllByMemberIdWithProblem(member.getId(), pageable);
+        return mapListResponses(page, pageable);
     }
 
     @Transactional(readOnly = true)
@@ -176,6 +138,34 @@ public class SubmissionService {
         }
 
         return memberService.read(email);
+    }
+
+    private Page<SubmissionDto.ListResponse> mapListResponses(Page<Submission> page, Pageable pageable) {
+        List<Submission> submissions = page.getContent();
+        if (submissions.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, page.getTotalElements());
+        }
+
+        List<SubmissionDto.ListResponse> content = submissions.stream()
+                .map(this::toListResponse)
+                .toList();
+
+        return new PageImpl<>(content, pageable, page.getTotalElements());
+    }
+
+    private SubmissionDto.ListResponse toListResponse(Submission submission) {
+        return new SubmissionDto.ListResponse(
+                submission.getId(),
+                submission.getProblem().getProblemNo(),
+                submission.getMember() != null ? submission.getMember().getNickname() : "익명",
+                submission.getProblem().getTitle(),
+                submission.getLanguage(),
+                submission.getProblem().getPlatform(),
+                submission.getExecutionTime(),
+                countCounterExamples(submission),
+                submission.getCreatedAt(),
+                submission.getIsOpen()
+        );
     }
 
     private boolean isDetailViewAllowed(Submission submission) {

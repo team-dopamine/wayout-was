@@ -243,6 +243,81 @@ class SubmissionServiceTest {
     }
 
     @Test
+    @DisplayName("내 제출 목록 조회 서비스 - 해당 사용자 제출 정보를 응답으로 매핑한다")
+    void list_mine_success() {
+        // given
+        String email = "test@gmail.com";
+        PageRequest pageable = PageRequest.of(0, 8);
+
+        Member member = Mockito.mock(Member.class);
+        Problem problem = Mockito.mock(Problem.class);
+        Submission submission = Mockito.mock(Submission.class);
+        JsonNode counterExamplesNode = Mockito.mock(JsonNode.class);
+        LocalDateTime createdAt = LocalDateTime.of(2026, 4, 16, 9, 30);
+
+        BDDMockito.given(memberService.read(email)).willReturn(member);
+        BDDMockito.given(member.getId()).willReturn(7L);
+        BDDMockito.given(member.getNickname()).willReturn("Jsplix");
+        BDDMockito.given(problem.getProblemNo()).willReturn(1200);
+        BDDMockito.given(problem.getTitle()).willReturn("부분 수열의 합");
+        BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
+        BDDMockito.given(submission.getId()).willReturn(31L);
+        BDDMockito.given(submission.getMember()).willReturn(member);
+        BDDMockito.given(submission.getProblem()).willReturn(problem);
+        BDDMockito.given(submission.getLanguage()).willReturn(Language.JAVA);
+        BDDMockito.given(submission.getExecutionTime()).willReturn(0.13);
+        BDDMockito.given(submission.getCounterExamples()).willReturn(counterExamplesNode);
+        BDDMockito.given(counterExamplesNode.isNull()).willReturn(false);
+        BDDMockito.given(counterExamplesNode.size()).willReturn(3);
+        BDDMockito.given(submission.getCreatedAt()).willReturn(createdAt);
+        BDDMockito.given(submission.getIsOpen()).willReturn(true);
+        BDDMockito.given(submissionRepository.findAllByMemberIdWithProblem(7L, pageable))
+                .willReturn(new PageImpl<>(List.of(submission), pageable, 1));
+
+        // when
+        Page<SubmissionDto.ListResponse> result = submissionService.listMine(email, pageable);
+
+        // then
+        Assertions.assertThat(result.getTotalElements()).isEqualTo(1);
+        Assertions.assertThat(result.getContent()).hasSize(1);
+
+        SubmissionDto.ListResponse item = result.getContent().get(0);
+        Assertions.assertThat(item.getId()).isEqualTo(31L);
+        Assertions.assertThat(item.getProblemNo()).isEqualTo(1200);
+        Assertions.assertThat(item.getNickname()).isEqualTo("Jsplix");
+        Assertions.assertThat(item.getTitle()).isEqualTo("부분 수열의 합");
+        Assertions.assertThat(item.getLanguage()).isEqualTo(Language.JAVA);
+        Assertions.assertThat(item.getPlatform()).isEqualTo(Platform.SWEA);
+        Assertions.assertThat(item.getExecutionTime()).isEqualTo(0.13);
+        Assertions.assertThat(item.getCounterExampleCount()).isEqualTo(3);
+        Assertions.assertThat(item.getCreatedAt()).isEqualTo(createdAt);
+
+        verifyNoInteractions(problemRepository, counterExampleRunner);
+    }
+
+    @Test
+    @DisplayName("내 제출 목록 조회 서비스 - 데이터가 없으면 빈 페이지를 반환한다")
+    void list_mine_empty() {
+        // given
+        String email = "test@gmail.com";
+        PageRequest pageable = PageRequest.of(0, 8);
+        Member member = Mockito.mock(Member.class);
+
+        BDDMockito.given(memberService.read(email)).willReturn(member);
+        BDDMockito.given(member.getId()).willReturn(7L);
+        BDDMockito.given(submissionRepository.findAllByMemberIdWithProblem(7L, pageable))
+                .willReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        // when
+        Page<SubmissionDto.ListResponse> result = submissionService.listMine(email, pageable);
+
+        // then
+        Assertions.assertThat(result.getContent()).isEmpty();
+        Assertions.assertThat(result.getTotalElements()).isZero();
+        verifyNoInteractions(problemRepository, counterExampleRunner);
+    }
+
+    @Test
     @DisplayName("제출 상세 조회 서비스 - 반례 목록이 있으면 카운트를 계산해 반환한다")
     void detail_success_with_counter_example_count() {
         // given

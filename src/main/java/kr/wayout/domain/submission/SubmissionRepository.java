@@ -35,4 +35,18 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Page<Submission> findAll(Pageable pageable);
 
     Page<Submission> findAllByProblem(Pageable pageable, Problem problem);
+
+    @Query(value = """
+            select s
+            from Submission s
+            join fetch s.problem
+            join fetch s.member
+            where s.member.id = :memberId
+            """,
+            countQuery = """
+                    select count(s)
+                    from Submission s
+                    where s.member.id = :memberId
+                    """)
+    Page<Submission> findAllByMemberIdWithProblem(@Param("memberId") Long memberId, Pageable pageable);
 }
