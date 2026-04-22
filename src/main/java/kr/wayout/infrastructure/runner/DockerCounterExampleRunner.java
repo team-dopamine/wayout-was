@@ -29,7 +29,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Component
 @Slf4j
@@ -47,6 +51,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
     private static final String TESTLIB_HEADER = "testlib.h";
     private static final String TESTLIB_RESOURCE_PATH = "include/" + TESTLIB_HEADER;
     private static final int DOCKER_TIMEOUT_SECONDS = 60;
+    private static final int PROCESS_OUTPUT_READ_TIMEOUT_SECONDS = 5;
     private static final String WORK_ROOT_ENV = "RUNNER_WORK_ROOT";
     private static final String WORK_ROOT_PROP = "wayout.runner.workRoot";
 
@@ -139,7 +144,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
                 .counterExamples(counterExamples)
                 .build();
     }
-    
+
     public boolean validateSingleCase(Problem problem, String inputBody) {
         Validator validator = validatorRepository.findValidatorByProblem(problem);
         if (validator == null) {
@@ -248,67 +253,20 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
             return List.of();
         }
 
-        Path workDir = null;
-        try {
-            workDir = createWorkDir(role);
-            Path sourceFile = workDir.resolve("main.cpp");
-            Path inputsDir = workDir.resolve("inputs");
-            Path outputsDir = workDir.resolve("outputs");
-            Files.createDirectories(inputsDir);
-            Files.createDirectories(outputsDir);
-
-            Files.writeString(sourceFile, sourceCode, StandardCharsets.UTF_8);
-            List<String> seedArgs = new ArrayList<>(stdins.size());
-            for (int i = 0; i < stdins.size(); i++) {
-                String stdin = stdins.get(i);
-                Files.writeString(inputsDir.resolve("input_" + i + ".txt"), stdin == null ? "" : stdin, StandardCharsets.UTF_8);
-                seedArgs.add(resolveSeedArg(stdin, i));
-            }
-            copyTestlibHeaderIfNeeded(sourceCode, workDir);
-
-            String script = buildGeneratorScript(seedArgs);
-            List<String> command = List.of(
-                    "docker", "run", "--rm",
-                    "-v", workDir.toAbsolutePath() + ":/work",
-                    "-w", "/work",
-                    CPP_DOCKER_IMAGE,
-                    "bash", "-lc", script
-            );
-
-            Process process = new ProcessBuilder(command).start();
-            process.getInputStream().readAllBytes(); // drain stdout to avoid blocking
-            String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-            boolean isFinished = process.waitFor(DOCKER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (!isFinished) {
-                process.destroyForcibly();
-                throw new IllegalStateException("Docker 실행시간이 초과되었습니다.");
-            }
-
-            int exitCode = process.exitValue();
-            if (exitCode != 0) {
-                log.error("Docker run failed. role={}, exitCode={}, stderr={}", role, exitCode, stderr);
-                throw new IllegalStateException("Docker 실행에 실패했습니다. stderr=" + stderr);
-            }
-
-            List<String> outputs = new ArrayList<>(stdins.size());
-            for (int i = 0; i < stdins.size(); i++) {
-                Path outputFile = outputsDir.resolve("case_" + i + ".txt");
-                if (!Files.exists(outputFile)) {
-                    throw new IllegalStateException("Docker 실행 결과 파일이 없습니다. file=" + outputFile);
-                }
-                outputs.add(Files.readString(outputFile, StandardCharsets.UTF_8));
-            }
-            return outputs;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Docker 실행에 실패했습니다.", e);
-        } catch (IOException e) {
-            throw new IllegalStateException("Docker 실행에 실패했습니다.", e);
-        } finally {
-            if (workDir != null) {
-                cleanup(workDir);
-            }
+        List<String> seedArgs = new ArrayList<>(stdins.size());
+        for (int i = 0; i < stdins.size(); i++) {
+            seedArgs.add(resolveSeedArg(stdins.get(i), i));
         }
+        return executeInDocker(new DockerExecutionSpec<>(
+                role,
+                sourceCode,
+                language,
+                stdins,
+                buildGeneratorScript(seedArgs),
+                CPP_DOCKER_IMAGE,
+                true,
+                (stdout, outputsDir, expectedCount) -> readCaseOutputs(outputsDir, expectedCount)
+        ));
     }
 
     private List<String> executeInDockerForStdouts(String role,
@@ -322,67 +280,16 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
             throw new IllegalArgumentException("언어가 지정되지 않았습니다.");
         }
 
-        Path workDir = null;
-        try {
-            workDir = createWorkDir(role);
-            Path inputsDir = workDir.resolve("inputs");
-            Path outputsDir = workDir.resolve("outputs");
-            Files.createDirectories(inputsDir);
-            Files.createDirectories(outputsDir);
-
-            Path sourceFile = resolveSourceFile(workDir, language);
-            Files.writeString(sourceFile, sourceCode, StandardCharsets.UTF_8);
-            for (int i = 0; i < stdins.size(); i++) {
-                String stdin = stdins.get(i);
-                Files.writeString(inputsDir.resolve("input_" + i + ".txt"), stdin == null ? "" : stdin, StandardCharsets.UTF_8);
-            }
-            if (language == Language.CPP) {
-                copyTestlibHeaderIfNeeded(sourceCode, workDir);
-            }
-
-            String script = buildProgramScript(language, stdins.size());
-            List<String> command = List.of(
-                    "docker", "run", "--rm",
-                    "-v", workDir.toAbsolutePath() + ":/work",
-                    "-w", "/work",
-                    resolveDockerImage(language),
-                    "bash", "-lc", script
-            );
-
-            Process process = new ProcessBuilder(command).start();
-            process.getInputStream().readAllBytes();
-            String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-            boolean isFinished = process.waitFor(DOCKER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (!isFinished) {
-                process.destroyForcibly();
-                throw new IllegalStateException("Docker 실행시간이 초과되었습니다.");
-            }
-
-            int exitCode = process.exitValue();
-            if (exitCode != 0) {
-                log.error("Docker run failed. role={}, exitCode={}, stderr={}", role, exitCode, stderr);
-                throw new IllegalStateException("Docker 실행에 실패했습니다. stderr=" + stderr);
-            }
-
-            List<String> outputs = new ArrayList<>(stdins.size());
-            for (int i = 0; i < stdins.size(); i++) {
-                Path outputFile = outputsDir.resolve("case_" + i + ".txt");
-                if (!Files.exists(outputFile)) {
-                    throw new IllegalStateException("Docker 실행 결과 파일이 없습니다. file=" + outputFile);
-                }
-                outputs.add(Files.readString(outputFile, StandardCharsets.UTF_8));
-            }
-            return outputs;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Docker 실행에 실패했습니다.", e);
-        } catch (IOException e) {
-            throw new IllegalStateException("Docker 실행에 실패했습니다.", e);
-        } finally {
-            if (workDir != null) {
-                cleanup(workDir);
-            }
-        }
+        return executeInDocker(new DockerExecutionSpec<>(
+                role,
+                sourceCode,
+                language,
+                stdins,
+                buildProgramScript(language, stdins.size()),
+                resolveDockerImage(language),
+                language == Language.CPP,
+                (stdout, outputsDir, expectedCount) -> readCaseOutputs(outputsDir, expectedCount)
+        ));
     }
 
     private List<Boolean> executeInDockerForValidationResults(String role,
@@ -396,79 +303,66 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
             return List.of();
         }
 
+        return executeInDocker(new DockerExecutionSpec<>(
+                role,
+                sourceCode,
+                language,
+                stdins,
+                buildValidatorScript(stdins.size()),
+                CPP_DOCKER_IMAGE,
+                true,
+                this::parseValidationResults
+        ));
+    }
+
+    private <T> T executeInDocker(DockerExecutionSpec<T> spec) {
         Path workDir = null;
         try {
-            workDir = createWorkDir(role);
-            Path sourceFile = workDir.resolve("main.cpp");
+            workDir = createWorkDir(spec.role());
             Path inputsDir = workDir.resolve("inputs");
             Path outputsDir = workDir.resolve("outputs");
             Files.createDirectories(inputsDir);
             Files.createDirectories(outputsDir);
 
-            Files.writeString(sourceFile, sourceCode, StandardCharsets.UTF_8);
-            for (int i = 0; i < stdins.size(); i++) {
-                String stdin = stdins.get(i);
-                Files.writeString(inputsDir.resolve("input_" + i + ".txt"), stdin == null ? "" : stdin, StandardCharsets.UTF_8);
+            Path sourceFile = resolveSourceFile(workDir, spec.language());
+            Files.writeString(sourceFile, spec.sourceCode(), StandardCharsets.UTF_8);
+            writeStdins(inputsDir, spec.stdins());
+            if (spec.copyTestlibHeader()) {
+                copyTestlibHeaderIfNeeded(spec.sourceCode(), workDir);
             }
-            copyTestlibHeaderIfNeeded(sourceCode, workDir);
 
-            String script = buildValidatorScript(stdins.size());
             List<String> command = List.of(
                     "docker", "run", "--rm",
                     "-v", workDir.toAbsolutePath() + ":/work",
                     "-w", "/work",
-                    CPP_DOCKER_IMAGE,
-                    "bash", "-lc", script
+                    spec.dockerImage(),
+                    "bash", "-lc", spec.script()
             );
 
             Process process = new ProcessBuilder(command).start();
-            String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+            InputStream stdoutStream = process.getInputStream();
+            InputStream stderrStream = process.getErrorStream();
+            CompletableFuture<String> stdoutFuture = readProcessOutputAsync(stdoutStream);
+            CompletableFuture<String> stderrFuture = readProcessOutputAsync(stderrStream);
             boolean isFinished = process.waitFor(DOCKER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!isFinished) {
                 process.destroyForcibly();
+                closeQuietly(stdoutStream);
+                closeQuietly(stderrStream);
+                stdoutFuture.cancel(true);
+                stderrFuture.cancel(true);
                 throw new IllegalStateException("Docker 실행시간이 초과되었습니다.");
             }
 
+            String stdout = readProcessOutput(stdoutFuture);
+            String stderr = readProcessOutput(stderrFuture);
             int exitCode = process.exitValue();
             if (exitCode != 0) {
-                log.error("Docker run failed. role={}, exitCode={}, stderr={}", role, exitCode, stderr);
+                log.error("Docker run failed. role={}, exitCode={}, stderr={}", spec.role(), exitCode, stderr);
                 throw new IllegalStateException("Docker 실행에 실패했습니다. stderr=" + stderr);
             }
 
-            String trimmed = stdout.trim();
-            String[] tokens = trimmed.isEmpty() ? new String[0] : trimmed.split("\\s+");
-            if (tokens.length != stdins.size()) {
-                throw new IllegalStateException("Validator 결과 개수가 일치하지 않습니다. expected="
-                        + stdins.size()
-                        + " actual="
-                        + tokens.length);
-            }
-            List<Boolean> results = new ArrayList<>(stdins.size());
-            int errorLogCount = 0;
-            for (int i = 0; i < tokens.length; i++) {
-                String token = tokens[i];
-                int code;
-                try {
-                    code = Integer.parseInt(token);
-                } catch (NumberFormatException e) {
-                    throw new IllegalStateException("Validator exit code 파싱에 실패했습니다. value=" + token, e);
-                }
-                boolean ok = code == 0;
-                results.add(ok);
-                if (!ok && errorLogCount < 5) {
-                    Path errFile = outputsDir.resolve("err_" + i + ".txt");
-                    String errText = Files.exists(errFile)
-                            ? Files.readString(errFile, StandardCharsets.UTF_8)
-                            : "";
-                    // log.warn("Validator failed: index={}, exitCode={}, stderr={}",
-                    //         i,
-                    //         code,
-                    //         truncateForLog(errText));
-                    errorLogCount++;
-                }
-            }
-            return results;
+            return spec.resultReader().read(stdout, outputsDir, spec.stdins().size());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Docker 실행에 실패했습니다.", e);
@@ -479,6 +373,115 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
                 cleanup(workDir);
             }
         }
+    }
+
+    private void writeStdins(Path inputsDir, List<String> stdins) throws IOException {
+        for (int i = 0; i < stdins.size(); i++) {
+            String stdin = stdins.get(i);
+            Files.writeString(inputsDir.resolve("input_" + i + ".txt"), stdin == null ? "" : stdin, StandardCharsets.UTF_8);
+        }
+    }
+
+    private CompletableFuture<String> readProcessOutputAsync(InputStream stream) {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        Thread.startVirtualThread(() -> {
+            try {
+                future.complete(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                future.completeExceptionally(new CompletionException(e));
+            }
+        });
+        return future;
+    }
+
+    private void closeQuietly(InputStream stream) {
+        try {
+            stream.close();
+        } catch (IOException ignored) {
+        }
+    }
+
+    private String readProcessOutput(CompletableFuture<String> outputFuture) throws IOException, InterruptedException {
+        try {
+            return outputFuture.get(PROCESS_OUTPUT_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof CompletionException completionException
+                    && completionException.getCause() instanceof IOException ioException) {
+                throw ioException;
+            }
+            if (cause instanceof IOException ioException) {
+                throw ioException;
+            }
+            throw new IllegalStateException("Docker 실행에 실패했습니다.", cause);
+        } catch (TimeoutException e) {
+            throw new IllegalStateException("Docker 실행에 실패했습니다.", e);
+        }
+    }
+
+    List<String> readCaseOutputs(Path outputsDir, int expectedCount) throws IOException {
+        List<String> outputs = new ArrayList<>(expectedCount);
+        for (int i = 0; i < expectedCount; i++) {
+            Path outputFile = outputsDir.resolve("case_" + i + ".txt");
+            if (!Files.exists(outputFile)) {
+                throw new IllegalStateException("Docker 실행 결과 파일이 없습니다. file=" + outputFile);
+            }
+            outputs.add(Files.readString(outputFile, StandardCharsets.UTF_8));
+        }
+        return outputs;
+    }
+
+    List<Boolean> parseValidationResults(String stdout, Path outputsDir, int expectedCount) throws IOException {
+        String trimmed = stdout.trim();
+        String[] tokens = trimmed.isEmpty() ? new String[0] : trimmed.split("\\s+");
+        if (tokens.length != expectedCount) {
+            throw new IllegalStateException("Validator 결과 개수가 일치하지 않습니다. expected="
+                    + expectedCount
+                    + " actual="
+                    + tokens.length);
+        }
+        List<Boolean> results = new ArrayList<>(expectedCount);
+        int errorLogCount = 0;
+        for (int i = 0; i < tokens.length; i++) {
+            String token = tokens[i];
+            int code;
+            try {
+                code = Integer.parseInt(token);
+            } catch (NumberFormatException e) {
+                throw new IllegalStateException("Validator exit code 파싱에 실패했습니다. value=" + token, e);
+            }
+            boolean ok = code == 0;
+            results.add(ok);
+            if (!ok && errorLogCount < 5) {
+                Path errFile = outputsDir.resolve("err_" + i + ".txt");
+                String errText = Files.exists(errFile)
+                        ? Files.readString(errFile, StandardCharsets.UTF_8)
+                        : "";
+                // log.warn("Validator failed: index={}, exitCode={}, stderr={}",
+                //         i,
+                //         code,
+                //         truncateForLog(errText));
+                errorLogCount++;
+            }
+        }
+        return results;
+    }
+
+    private record DockerExecutionSpec<T>(
+            String role,
+            String sourceCode,
+            Language language,
+            List<String> stdins,
+            String script,
+            String dockerImage,
+            boolean copyTestlibHeader,
+            DockerResultReader<T> resultReader
+    ) {
+    }
+
+    @FunctionalInterface
+    private interface DockerResultReader<T> {
+        T read(String stdout, Path outputsDir, int expectedCount) throws IOException;
     }
 
     private void cleanup(Path workDir) {
