@@ -1,9 +1,13 @@
 package kr.wayout.infrastructure.runner;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -54,13 +58,36 @@ class DockerCounterExampleRunnerTest {
         // given
         Path outputsDir = tempDir.resolve("outputs");
         Files.createDirectories(outputsDir);
-        Files.writeString(outputsDir.resolve("err_1.txt"), "validator failed\n", StandardCharsets.UTF_8);
 
         // when
         List<Boolean> result = runner.parseValidationResults("0\n1 0\n", outputsDir, 3);
 
         // then
         Assertions.assertThat(result).containsExactly(true, false, true);
+    }
+
+    @Test
+    @DisplayName("Validator 결과 파싱 - 실패한 case는 경고 로그를 남긴다")
+    void parse_validation_results_logs_warn_for_failed_case() {
+        // given
+        Logger logger = (Logger) LoggerFactory.getLogger(DockerCounterExampleRunner.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            // when
+            List<Boolean> result = runner.parseValidationResults("0 1 0", tempDir, 3);
+
+            // then
+            Assertions.assertThat(result).containsExactly(true, false, true);
+            Assertions.assertThat(appender.list)
+                    .extracting(ILoggingEvent::getFormattedMessage)
+                    .contains("Validator failed: index=1, exitCode=1");
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
     }
 
     @Test

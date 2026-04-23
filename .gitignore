@@ -8,7 +8,6 @@ src/main/resources/application.yml
 .gradle-home/
 docs
 .codex
-.omx
 
 ### STS ###
 .apt_generated

@@ -431,7 +431,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
         return outputs;
     }
 
-    List<Boolean> parseValidationResults(String stdout, Path outputsDir, int expectedCount) throws IOException {
+    List<Boolean> parseValidationResults(String stdout, Path outputsDir, int expectedCount) {
         String trimmed = stdout.trim();
         String[] tokens = trimmed.isEmpty() ? new String[0] : trimmed.split("\\s+");
         if (tokens.length != expectedCount) {
@@ -453,14 +453,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
             boolean ok = code == 0;
             results.add(ok);
             if (!ok && errorLogCount < 5) {
-                Path errFile = outputsDir.resolve("err_" + i + ".txt");
-                String errText = Files.exists(errFile)
-                        ? Files.readString(errFile, StandardCharsets.UTF_8)
-                        : "";
-                // log.warn("Validator failed: index={}, exitCode={}, stderr={}",
-                //         i,
-                //         code,
-                //         truncateForLog(errText));
+                log.warn("Validator failed: index={}, exitCode={}", i, code);
                 errorLogCount++;
             }
         }
