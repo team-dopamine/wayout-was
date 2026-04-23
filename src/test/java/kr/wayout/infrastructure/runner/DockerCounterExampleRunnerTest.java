@@ -3,10 +3,15 @@ package kr.wayout.infrastructure.runner;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import kr.wayout.domain.problem.Problem;
+import kr.wayout.domain.testcase.Testcase;
+import kr.wayout.domain.testcase.TestcaseRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.BDDMockito;
+import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -17,10 +22,14 @@ import java.util.List;
 
 class DockerCounterExampleRunnerTest {
 
-    private final DockerCounterExampleRunner runner = new DockerCounterExampleRunner(null, null, null, null);
+    private final DockerCounterExampleRunner runner = new DockerCounterExampleRunner(null, null, null, null, null);
 
     @TempDir
     private Path tempDir;
+
+    private DockerCounterExampleRunner newRunner(TestcaseRepository testcaseRepository) {
+        return new DockerCounterExampleRunner(null, null, testcaseRepository, null, null);
+    }
 
     @Test
     @DisplayName("Docker 출력 파일 읽기 - case 파일을 순서대로 읽는다")
@@ -115,6 +124,45 @@ class DockerCounterExampleRunnerTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Validator exit code 파싱에 실패했습니다. value=nope")
                 .hasCauseInstanceOf(NumberFormatException.class);
+    }
+
+    @Test
+    @DisplayName("등록 테스트 케이스 확인 - problem 기준으로 존재 여부를 검사한다")
+    void has_registered_testcases_checks_repository_by_problem() {
+        // given
+        TestcaseRepository testcaseRepository = Mockito.mock(TestcaseRepository.class);
+        DockerCounterExampleRunner dockerCounterExampleRunner = newRunner(testcaseRepository);
+        Problem problem = Mockito.mock(Problem.class);
+        BDDMockito.given(testcaseRepository.existsByProblem(problem)).willReturn(true);
+
+        // when
+        boolean result = dockerCounterExampleRunner.hasRegisteredTestcases(problem);
+
+        // then
+        Assertions.assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("등록 테스트 케이스 조회 - 존재하는 문제의 테스트 케이스를 problem 기준으로 불러온다")
+    void load_registered_testcases_returns_problem_cases() {
+        // given
+        TestcaseRepository testcaseRepository = Mockito.mock(TestcaseRepository.class);
+        DockerCounterExampleRunner dockerCounterExampleRunner = newRunner(testcaseRepository);
+        Problem problem = Mockito.mock(Problem.class);
+        Testcase first = Testcase.builder().input("1 2").output("3").problem(problem).build();
+        Testcase second = Testcase.builder().input("4 5").output("9").problem(problem).build();
+        BDDMockito.given(testcaseRepository.findAllByProblemOrderByIdAsc(problem)).willReturn(List.of(first, second));
+
+        // when
+        List<Testcase> result = dockerCounterExampleRunner.loadRegisteredTestcases(problem);
+
+        // then
+        Assertions.assertThat(result)
+                .extracting(Testcase::getInput, Testcase::getOutput)
+                .containsExactly(
+                        Assertions.tuple("1 2", "3"),
+                        Assertions.tuple("4 5", "9")
+                );
     }
 
 }
