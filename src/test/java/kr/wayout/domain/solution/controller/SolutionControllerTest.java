@@ -131,4 +131,43 @@ class SolutionControllerTest {
         mockMvc.perform(get("/solutions/me"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    @DisplayName("내 정답 코드 기여 상세 조회 API - 성공")
+    void detailMyContribution_success() throws Exception {
+        // given
+        String email = "test@gmail.com";
+        Long solutionId = 11L;
+        setAuthentication(email);
+
+        SolutionDto.MyContributionDetailResponse response = SolutionDto.MyContributionDetailResponse.builder()
+                .id(solutionId)
+                .problemId(1L)
+                .problemNo(1000)
+                .sourceCode("public class Main {}")
+                .language(Language.JAVA)
+                .contributionDate(LocalDateTime.of(2026, 4, 26, 1, 15))
+                .isOpen(true)
+                .build();
+
+        given(solutionService.detailMyContribution(email, solutionId)).willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/solutions/me/{solutionId}", solutionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(11))
+                .andExpect(jsonPath("$.problemId").value(1))
+                .andExpect(jsonPath("$.problemNo").value(1000))
+                .andExpect(jsonPath("$.sourceCode").value("public class Main {}"))
+                .andExpect(jsonPath("$.language").value("JAVA"))
+                .andExpect(jsonPath("$.isOpen").value(true));
+    }
+
+    @Test
+    @DisplayName("내 정답 코드 기여 상세 조회 API - 인증되지 않은 사용자")
+    void detailMyContribution_unauthorized() throws Exception {
+        // when & then
+        mockMvc.perform(get("/solutions/me/{solutionId}", 11L))
+                .andExpect(status().isUnauthorized());
+    }
 }
