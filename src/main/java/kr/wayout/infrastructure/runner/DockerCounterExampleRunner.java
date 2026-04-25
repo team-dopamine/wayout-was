@@ -11,6 +11,8 @@ import kr.wayout.domain.submission.Language;
 import kr.wayout.domain.submission.dto.SubmissionDto;
 import kr.wayout.domain.submission.runner.CounterExampleRunResult;
 import kr.wayout.domain.submission.runner.CounterExampleRunner;
+import kr.wayout.domain.testcase.Testcase;
+import kr.wayout.domain.testcase.TestcaseRepository;
 import kr.wayout.domain.validator.Validator;
 import kr.wayout.domain.validator.ValidatorRepository;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +59,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
 
     private final ProblemRepository problemRepository;
     private final GeneratorRepository generatorRepository;
+    private final TestcaseRepository testcaseRepository;
     private final ValidatorRepository validatorRepository;
     private final SolutionRepository solutionRepository;
 
@@ -75,6 +78,9 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
         }
         Solution solution = solutionRepository.findTopByProblemOrderByVersionDesc(problem)
                 .orElseThrow(() -> new EntityNotFoundException("정답 코드가 존재하지 않습니다."));
+        List<Testcase> registeredTestcases = hasRegisteredTestcases(problem)
+                ? loadRegisteredTestcases(problem)
+                : List.of();
 
         long baseSeed = System.nanoTime();
         List<String> generatorInputs = buildGeneratorInputs(baseSeed);
@@ -92,7 +98,7 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
             }
         }
 
-        if (filteredOutputs.isEmpty()) {
+        if (filteredOutputs.isEmpty() && registeredTestcases.isEmpty()) {
             return CounterExampleRunResult.builder()
                     .found(false)
                     .executionTime(elapsedSeconds(startedAt))
@@ -103,27 +109,43 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
                     .build();
         }
 
-        List<String> programInputs = new ArrayList<>(filteredOutputs.size());
-        for (String output : filteredOutputs) {
-            programInputs.add(wrapSingleCaseForProgram(output));
-        }
+        List<String> registeredProgramInputs = wrapCasesForProgram(extractRegisteredInputs(registeredTestcases));
+        List<String> generatedProgramInputs = wrapCasesForProgram(filteredOutputs);
+        List<String> allProgramInputs = new ArrayList<>(registeredProgramInputs.size() + generatedProgramInputs.size());
+        allProgramInputs.addAll(registeredProgramInputs);
+        allProgramInputs.addAll(generatedProgramInputs);
 
-        List<String> submissionOutputs = executeInDockerForStdouts(
+        List<String> allSubmissionOutputs = executeInDockerForStdouts(
                 "submission",
                 sourceCode,
                 language,
-                programInputs
+                allProgramInputs
         );
-        List<String> solutionOutputs = executeInDockerForStdouts(
-                "solution",
-                solution.getSourceCode(),
-                solution.getLanguage(),
-                programInputs
-        );
+        List<String> solutionOutputs = generatedProgramInputs.isEmpty()
+                ? List.of()
+                : executeInDockerForStdouts(
+                        "solution",
+                        solution.getSourceCode(),
+                        solution.getLanguage(),
+                        generatedProgramInputs
+                );
 
         List<SubmissionDto.CounterExampleCase> counterExamples = new ArrayList<>();
+        int registeredCaseCount = registeredTestcases.size();
+        for (int i = 0; i < registeredCaseCount; i++) {
+            Testcase testcase = registeredTestcases.get(i);
+            String submissionOutput = allSubmissionOutputs.get(i);
+            if (!outputsMatch(submissionOutput, testcase.getOutput())) {
+                counterExamples.add(SubmissionDto.CounterExampleCase.builder()
+                        .input(testcase.getInput())
+                        .expectedOutput(testcase.getOutput())
+                        .actualOutput(submissionOutput)
+                        .build());
+            }
+        }
+
         for (int i = 0; i < filteredOutputs.size(); i++) {
-            String submissionOutput = submissionOutputs.get(i);
+            String submissionOutput = allSubmissionOutputs.get(registeredCaseCount + i);
             String solutionOutput = solutionOutputs.get(i);
             if (!outputsMatch(submissionOutput, solutionOutput)) {
                 counterExamples.add(SubmissionDto.CounterExampleCase.builder()
@@ -186,6 +208,17 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
         );
     }
 
+    boolean hasRegisteredTestcases(Problem problem) {
+        return testcaseRepository != null && testcaseRepository.existsByProblem(problem);
+    }
+
+    List<Testcase> loadRegisteredTestcases(Problem problem) {
+        if (testcaseRepository == null) {
+            return List.of();
+        }
+        return testcaseRepository.findAllByProblemOrderByIdAsc(problem);
+    }
+
     private List<String> buildGeneratorInputs(long baseSeed) {
         Random random = new Random(baseSeed);
 
@@ -243,6 +276,22 @@ public class DockerCounterExampleRunner implements CounterExampleRunner {
 
     private String formatGeneratorStdin(int group, int pattern, long seed) {
         return group + " " + pattern + " " + seed;
+    }
+
+    private List<String> extractRegisteredInputs(List<Testcase> registeredTestcases) {
+        List<String> inputs = new ArrayList<>(registeredTestcases.size());
+        for (Testcase registeredTestcase : registeredTestcases) {
+            inputs.add(registeredTestcase.getInput());
+        }
+        return inputs;
+    }
+
+    private List<String> wrapCasesForProgram(List<String> inputs) {
+        List<String> wrappedInputs = new ArrayList<>(inputs.size());
+        for (String input : inputs) {
+            wrappedInputs.add(wrapSingleCaseForProgram(input));
+        }
+        return wrappedInputs;
     }
 
     private List<String> executeGeneratorInDockerForStdouts(String role, String sourceCode, Language language, List<String> stdins) {
