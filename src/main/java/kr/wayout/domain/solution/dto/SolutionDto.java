@@ -67,4 +67,29 @@ public class SolutionDto {
                     .build();
         }
     }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class MyContributionDetailResponse {
+        private Long id;
+        private Long problemId;
+        private Integer problemNo;
+        private String sourceCode;
+        private Language language;
+        private LocalDateTime contributionDate;
+        private Boolean isOpen;
+
+        public static MyContributionDetailResponse from(Solution solution) {
+            return MyContributionDetailResponse.builder()
+                    .id(solution.getId())
+                    .problemId(solution.getProblem().getId())
+                    .problemNo(solution.getProblem().getProblemNo())
+                    .sourceCode(solution.getSourceCode())
+                    .language(solution.getLanguage())
+                    .contributionDate(solution.getCreatedAt())
+                    .isOpen(solution.getIsOpen())
+                    .build();
+        }
+    }
 }

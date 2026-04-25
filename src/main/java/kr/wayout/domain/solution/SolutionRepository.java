@@ -27,4 +27,14 @@ public interface SolutionRepository extends JpaRepository<Solution, Long> {
                     where s.member.id = :memberId
                     """)
     Page<Solution> findAllByMemberIdWithProblem(@Param("memberId") Long memberId, Pageable pageable);
+
+    @Query("""
+            select s
+            from Solution s
+            join fetch s.problem
+            where s.id = :solutionId
+              and s.member.id = :memberId
+            """)
+    Optional<Solution> findByIdAndMemberIdWithProblem(@Param("solutionId") Long solutionId,
+                                                      @Param("memberId") Long memberId);
 }

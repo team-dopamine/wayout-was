@@ -33,4 +33,14 @@ public interface SolutionApi {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     ResponseEntity<?> listContributions(String email, @ParameterObject Pageable pageable);
+
+    @Operation(summary = "내 정답 코드 기여 상세 조회 API", description = "로그인한 사용자의 정답 코드 기여 상세 내역을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "정답 코드 기여 상세 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = SolutionDto.MyContributionDetailResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 정답 코드 기여 내역")
+    })
+    ResponseEntity<?> detailMyContribution(String email, Long solutionId);
 }
