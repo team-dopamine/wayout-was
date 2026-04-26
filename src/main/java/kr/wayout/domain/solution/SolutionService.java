@@ -52,4 +52,14 @@ public class SolutionService {
         return solutionRepository.findAllByMemberIdWithProblem(member.getId(), pageable)
                 .map(SolutionDto.ContributionResponse::from);
     }
+
+    @Transactional(readOnly = true)
+    public SolutionDto.MyContributionDetailResponse detailMyContribution(String email, Long solutionId) {
+        Member member = memberService.read(email);
+
+        Solution solution = solutionRepository.findByIdAndMemberIdWithProblem(solutionId, member.getId())
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.SOLUTION_NOT_FOUND));
+
+        return SolutionDto.MyContributionDetailResponse.from(solution);
+    }
 }

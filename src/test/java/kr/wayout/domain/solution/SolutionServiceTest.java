@@ -7,6 +7,8 @@ import kr.wayout.domain.problem.Problem;
 import kr.wayout.domain.problem.ProblemRepository;
 import kr.wayout.domain.solution.dto.SolutionDto;
 import kr.wayout.domain.submission.Language;
+import kr.wayout.global.exception.CustomBusinessException;
+import kr.wayout.global.exception.ErrorCode;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -153,5 +155,63 @@ class SolutionServiceTest {
         // then
         Assertions.assertThat(result.getContent()).isEmpty();
         Assertions.assertThat(result.getTotalElements()).isZero();
+    }
+
+    @Test
+    @DisplayName("내 정답 코드 기여 상세 조회 - 로그인한 사용자의 기여 정보를 반환한다")
+    void detailMyContribution_success() {
+        // given
+        String email = "test@gmail.com";
+        Long solutionId = 11L;
+        LocalDateTime createdAt = LocalDateTime.of(2026, 4, 26, 1, 15);
+
+        Member member = Mockito.mock(Member.class);
+        Problem problem = Mockito.mock(Problem.class);
+        Solution solution = Mockito.mock(Solution.class);
+
+        BDDMockito.given(memberService.read(email)).willReturn(member);
+        BDDMockito.given(member.getId()).willReturn(7L);
+        BDDMockito.given(solutionRepository.findByIdAndMemberIdWithProblem(solutionId, 7L))
+                .willReturn(Optional.of(solution));
+        BDDMockito.given(solution.getId()).willReturn(solutionId);
+        BDDMockito.given(solution.getProblem()).willReturn(problem);
+        BDDMockito.given(problem.getId()).willReturn(77L);
+        BDDMockito.given(problem.getProblemNo()).willReturn(1001);
+        BDDMockito.given(solution.getSourceCode()).willReturn("public class Main {}");
+        BDDMockito.given(solution.getLanguage()).willReturn(Language.JAVA);
+        BDDMockito.given(solution.getCreatedAt()).willReturn(createdAt);
+        BDDMockito.given(solution.getIsOpen()).willReturn(true);
+
+        // when
+        SolutionDto.MyContributionDetailResponse result = solutionService.detailMyContribution(email, solutionId);
+
+        // then
+        Assertions.assertThat(result.getId()).isEqualTo(solutionId);
+        Assertions.assertThat(result.getProblemId()).isEqualTo(77L);
+        Assertions.assertThat(result.getProblemNo()).isEqualTo(1001);
+        Assertions.assertThat(result.getSourceCode()).isEqualTo("public class Main {}");
+        Assertions.assertThat(result.getLanguage()).isEqualTo(Language.JAVA);
+        Assertions.assertThat(result.getContributionDate()).isEqualTo(createdAt);
+        Assertions.assertThat(result.getIsOpen()).isTrue();
+    }
+
+    @Test
+    @DisplayName("내 정답 코드 기여 상세 조회 - 본인 기여가 아니면 예외를 던진다")
+    void detailMyContribution_notFound() {
+        // given
+        String email = "test@gmail.com";
+        Long solutionId = 11L;
+        Member member = Mockito.mock(Member.class);
+
+        BDDMockito.given(memberService.read(email)).willReturn(member);
+        BDDMockito.given(member.getId()).willReturn(7L);
+        BDDMockito.given(solutionRepository.findByIdAndMemberIdWithProblem(solutionId, 7L))
+                .willReturn(Optional.empty());
+
+        // when & then
+        Assertions.assertThatThrownBy(() -> solutionService.detailMyContribution(email, solutionId))
+                .isInstanceOf(CustomBusinessException.class)
+                .satisfies(throwable -> Assertions.assertThat(((CustomBusinessException) throwable).getErrorCode())
+                        .isEqualTo(ErrorCode.SOLUTION_NOT_FOUND));
     }
 }
