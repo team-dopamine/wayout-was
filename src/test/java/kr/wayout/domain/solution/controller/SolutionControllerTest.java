@@ -144,6 +144,7 @@ class SolutionControllerTest {
                 .id(solutionId)
                 .problemId(1L)
                 .problemNo(1000)
+                .title("A+B")
                 .sourceCode("public class Main {}")
                 .language(Language.JAVA)
                 .contributionDate(LocalDateTime.of(2026, 4, 26, 1, 15))
@@ -158,6 +159,7 @@ class SolutionControllerTest {
                 .andExpect(jsonPath("$.id").value(11))
                 .andExpect(jsonPath("$.problemId").value(1))
                 .andExpect(jsonPath("$.problemNo").value(1000))
+                .andExpect(jsonPath("$.title").value("A+B"))
                 .andExpect(jsonPath("$.sourceCode").value("public class Main {}"))
                 .andExpect(jsonPath("$.language").value("JAVA"))
                 .andExpect(jsonPath("$.isOpen").value(true));

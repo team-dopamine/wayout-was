@@ -75,6 +75,7 @@ public class SolutionDto {
         private Long id;
         private Long problemId;
         private Integer problemNo;
+        private String title;
         private String sourceCode;
         private Language language;
         private LocalDateTime contributionDate;
@@ -85,6 +86,7 @@ public class SolutionDto {
                     .id(solution.getId())
                     .problemId(solution.getProblem().getId())
                     .problemNo(solution.getProblem().getProblemNo())
+                    .title(solution.getProblem().getTitle())
                     .sourceCode(solution.getSourceCode())
                     .language(solution.getLanguage())
                     .contributionDate(solution.getCreatedAt())

@@ -177,6 +177,7 @@ class SolutionServiceTest {
         BDDMockito.given(solution.getProblem()).willReturn(problem);
         BDDMockito.given(problem.getId()).willReturn(77L);
         BDDMockito.given(problem.getProblemNo()).willReturn(1001);
+        BDDMockito.given(problem.getTitle()).willReturn("A+B");
         BDDMockito.given(solution.getSourceCode()).willReturn("public class Main {}");
         BDDMockito.given(solution.getLanguage()).willReturn(Language.JAVA);
         BDDMockito.given(solution.getCreatedAt()).willReturn(createdAt);
@@ -189,6 +190,7 @@ class SolutionServiceTest {
         Assertions.assertThat(result.getId()).isEqualTo(solutionId);
         Assertions.assertThat(result.getProblemId()).isEqualTo(77L);
         Assertions.assertThat(result.getProblemNo()).isEqualTo(1001);
+        Assertions.assertThat(result.getTitle()).isEqualTo("A+B");
         Assertions.assertThat(result.getSourceCode()).isEqualTo("public class Main {}");
         Assertions.assertThat(result.getLanguage()).isEqualTo(Language.JAVA);
         Assertions.assertThat(result.getContributionDate()).isEqualTo(createdAt);
