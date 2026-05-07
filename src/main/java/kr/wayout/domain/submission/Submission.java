@@ -32,6 +32,12 @@ public class Submission extends BaseEntity {
     @Column(name = "execution_time")
     private Double executionTime;
 
+    @Column(name = "total_testcase_count")
+    private Integer totalTestcaseCount;
+
+    @Column(name = "counter_example_count")
+    private Integer counterExampleCount;
+
     @Column(name = "is_found", nullable = false)
     private Boolean isFound;
 
@@ -56,6 +62,8 @@ public class Submission extends BaseEntity {
     @Builder
     public Submission(Language language,
                       Double executionTime,
+                      Integer totalTestcaseCount,
+                      Integer counterExampleCount,
                       Boolean isFound,
                       String sourceCode,
                       JsonNode counterExamples,
@@ -64,6 +72,8 @@ public class Submission extends BaseEntity {
                       Problem problem) {
         this.language = language;
         this.executionTime = executionTime;
+        this.totalTestcaseCount = totalTestcaseCount;
+        this.counterExampleCount = counterExampleCount;
         this.isFound = isFound;
         this.sourceCode = sourceCode;
         this.counterExamples = counterExamples;
@@ -79,7 +89,9 @@ public class Submission extends BaseEntity {
                                     JsonNode counterExamples,
                                     Boolean isOpen,
                                     boolean isFound,
-                                    Double executionTime) {
+                                    Double executionTime,
+                                    Integer totalTestcaseCount,
+                                    Integer counterExampleCount) {
         return Submission.builder()
                 .member(member)
                 .problem(problem)
@@ -89,6 +101,8 @@ public class Submission extends BaseEntity {
                 .isOpen(isOpen)
                 .isFound(isFound)
                 .executionTime(executionTime)
+                .totalTestcaseCount(totalTestcaseCount)
+                .counterExampleCount(counterExampleCount)
                 .build();
     }
 }

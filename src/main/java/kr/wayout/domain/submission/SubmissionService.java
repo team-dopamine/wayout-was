@@ -49,6 +49,7 @@ public class SubmissionService {
         JsonNode counterExamples = objectMapper.valueToTree(
                 result.getCounterExamples() == null ? List.of() : result.getCounterExamples()
         );
+        int counterExampleCount = result.getCounterExamples() == null ? 0 : result.getCounterExamples().size();
 
         Submission submission = Submission.create(
                 member,
@@ -58,7 +59,9 @@ public class SubmissionService {
                 counterExamples,
                 dto.getIsOpen(),
                 result.isFound(),
-                result.getExecutionTime()
+                result.getExecutionTime(),
+                result.getTotalTestcaseCount(),
+                counterExampleCount
         );
         submissionRepository.save(submission);
 
@@ -70,6 +73,8 @@ public class SubmissionService {
                 .message(message)
                 .found(result.isFound())
                 .executionTime(result.getExecutionTime())
+                .totalTestcaseCount(result.getTotalTestcaseCount())
+                .counterExampleCount(counterExampleCount)
                 .counterExamples(result.getCounterExamples())
                 .outputFilePath(result.getOutputFilePath())
                 .build();
@@ -123,7 +128,9 @@ public class SubmissionService {
                 .problemNo(submission.getProblem().getProblemNo().longValue())
                 .title(submission.getProblem().getTitle())
                 .sourceCode(submission.getSourceCode())
-                .counterExampleCount(counterExamples.size())
+                .found(submission.getIsFound())
+                .totalTestcaseCount(submission.getTotalTestcaseCount())
+                .counterExampleCount(resolveCounterExampleCount(submission, counterExamples.size()))
                 .counterExamples(counterExamples)
                 .language(submission.getLanguage())
                 .platform(submission.getProblem().getPlatform())
@@ -159,10 +166,12 @@ public class SubmissionService {
                 submission.getProblem().getProblemNo(),
                 submission.getMember() != null ? submission.getMember().getNickname() : "익명",
                 submission.getProblem().getTitle(),
+                submission.getIsFound(),
                 submission.getLanguage(),
                 submission.getProblem().getPlatform(),
                 submission.getExecutionTime(),
-                countCounterExamples(submission),
+                submission.getTotalTestcaseCount(),
+                resolveCounterExampleCount(submission, countCounterExamples(submission)),
                 submission.getCreatedAt(),
                 submission.getIsOpen()
         );
@@ -179,6 +188,12 @@ public class SubmissionService {
         }
 
         return counterExamplesNode.size();
+    }
+
+    private int resolveCounterExampleCount(Submission submission, int fallbackCount) {
+        return submission.getCounterExampleCount() != null
+                ? submission.getCounterExampleCount()
+                : fallbackCount;
     }
 
 }
