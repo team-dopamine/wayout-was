@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,8 +81,11 @@ class SubmissionServiceTest {
         BDDMockito.given(firstSubmission.getId()).willReturn(1L);
         BDDMockito.given(firstSubmission.getMember()).willReturn(member);
         BDDMockito.given(firstSubmission.getProblem()).willReturn(firstProblem);
+        BDDMockito.given(firstSubmission.getIsFound()).willReturn(true);
         BDDMockito.given(firstSubmission.getLanguage()).willReturn(Language.JAVA);
         BDDMockito.given(firstSubmission.getExecutionTime()).willReturn(1.5);
+        BDDMockito.given(firstSubmission.getTotalTestcaseCount()).willReturn(100);
+        BDDMockito.given(firstSubmission.getCounterExampleCount()).willReturn(2);
         BDDMockito.given(firstSubmission.getCounterExamples()).willReturn(firstCounterExamples);
         BDDMockito.given(firstCounterExamples.isNull()).willReturn(false);
         BDDMockito.given(firstCounterExamples.size()).willReturn(2);
@@ -91,8 +95,11 @@ class SubmissionServiceTest {
         BDDMockito.given(secondSubmission.getId()).willReturn(2L);
         BDDMockito.given(secondSubmission.getMember()).willReturn(null);
         BDDMockito.given(secondSubmission.getProblem()).willReturn(secondProblem);
+        BDDMockito.given(secondSubmission.getIsFound()).willReturn(false);
         BDDMockito.given(secondSubmission.getLanguage()).willReturn(Language.PYTHON);
         BDDMockito.given(secondSubmission.getExecutionTime()).willReturn(2.3);
+        BDDMockito.given(secondSubmission.getTotalTestcaseCount()).willReturn(null);
+        BDDMockito.given(secondSubmission.getCounterExampleCount()).willReturn(null);
         BDDMockito.given(secondSubmission.getCounterExamples()).willReturn(null);
         BDDMockito.given(secondSubmission.getCreatedAt()).willReturn(secondCreatedAt);
         BDDMockito.given(secondSubmission.getIsOpen()).willReturn(false);
@@ -112,9 +119,11 @@ class SubmissionServiceTest {
         Assertions.assertThat(first.getProblemNo()).isEqualTo(1001);
         Assertions.assertThat(first.getNickname()).isEqualTo("Jsplix");
         Assertions.assertThat(first.getTitle()).isEqualTo("A+B");
+        Assertions.assertThat(first.getFound()).isTrue();
         Assertions.assertThat(first.getLanguage()).isEqualTo(Language.JAVA);
         Assertions.assertThat(first.getPlatform()).isEqualTo(Platform.SWEA);
         Assertions.assertThat(first.getExecutionTime()).isEqualTo(1.5);
+        Assertions.assertThat(first.getTotalTestcaseCount()).isEqualTo(100);
         Assertions.assertThat(first.getCounterExampleCount()).isEqualTo(2);
         Assertions.assertThat(first.getCreatedAt()).isEqualTo(firstCreatedAt);
 
@@ -123,9 +132,11 @@ class SubmissionServiceTest {
         Assertions.assertThat(second.getProblemNo()).isEqualTo(1002);
         Assertions.assertThat(second.getNickname()).isEqualTo("익명");
         Assertions.assertThat(second.getTitle()).isEqualTo("최대값 찾기");
+        Assertions.assertThat(second.getFound()).isFalse();
         Assertions.assertThat(second.getLanguage()).isEqualTo(Language.PYTHON);
         Assertions.assertThat(second.getPlatform()).isEqualTo(Platform.SWEA);
         Assertions.assertThat(second.getExecutionTime()).isEqualTo(2.3);
+        Assertions.assertThat(second.getTotalTestcaseCount()).isNull();
         Assertions.assertThat(second.getCounterExampleCount()).isZero();
         Assertions.assertThat(second.getCreatedAt()).isEqualTo(secondCreatedAt);
 
@@ -170,8 +181,11 @@ class SubmissionServiceTest {
         BDDMockito.given(submission.getId()).willReturn(10L);
         BDDMockito.given(submission.getMember()).willReturn(member);
         BDDMockito.given(submission.getProblem()).willReturn(problem);
+        BDDMockito.given(submission.getIsFound()).willReturn(false);
         BDDMockito.given(submission.getLanguage()).willReturn(Language.CPP);
         BDDMockito.given(submission.getExecutionTime()).willReturn(0.7);
+        BDDMockito.given(submission.getTotalTestcaseCount()).willReturn(80);
+        BDDMockito.given(submission.getCounterExampleCount()).willReturn(1);
         BDDMockito.given(submission.getCounterExamples()).willReturn(counterExamplesNode);
         BDDMockito.given(counterExamplesNode.isNull()).willReturn(false);
         BDDMockito.given(counterExamplesNode.size()).willReturn(1);
@@ -193,9 +207,11 @@ class SubmissionServiceTest {
         Assertions.assertThat(item.getProblemNo()).isEqualTo(1001);
         Assertions.assertThat(item.getNickname()).isEqualTo("Jsplix");
         Assertions.assertThat(item.getTitle()).isEqualTo("A+B");
+        Assertions.assertThat(item.getFound()).isFalse();
         Assertions.assertThat(item.getLanguage()).isEqualTo(Language.CPP);
         Assertions.assertThat(item.getPlatform()).isEqualTo(Platform.SWEA);
         Assertions.assertThat(item.getExecutionTime()).isEqualTo(0.7);
+        Assertions.assertThat(item.getTotalTestcaseCount()).isEqualTo(80);
         Assertions.assertThat(item.getCounterExampleCount()).isEqualTo(1);
         Assertions.assertThat(item.getCreatedAt()).isEqualTo(createdAt);
 
@@ -264,8 +280,11 @@ class SubmissionServiceTest {
         BDDMockito.given(submission.getId()).willReturn(31L);
         BDDMockito.given(submission.getMember()).willReturn(member);
         BDDMockito.given(submission.getProblem()).willReturn(problem);
+        BDDMockito.given(submission.getIsFound()).willReturn(true);
         BDDMockito.given(submission.getLanguage()).willReturn(Language.JAVA);
         BDDMockito.given(submission.getExecutionTime()).willReturn(0.13);
+        BDDMockito.given(submission.getTotalTestcaseCount()).willReturn(120);
+        BDDMockito.given(submission.getCounterExampleCount()).willReturn(3);
         BDDMockito.given(submission.getCounterExamples()).willReturn(counterExamplesNode);
         BDDMockito.given(counterExamplesNode.isNull()).willReturn(false);
         BDDMockito.given(counterExamplesNode.size()).willReturn(3);
@@ -286,9 +305,11 @@ class SubmissionServiceTest {
         Assertions.assertThat(item.getProblemNo()).isEqualTo(1200);
         Assertions.assertThat(item.getNickname()).isEqualTo("Jsplix");
         Assertions.assertThat(item.getTitle()).isEqualTo("부분 수열의 합");
+        Assertions.assertThat(item.getFound()).isTrue();
         Assertions.assertThat(item.getLanguage()).isEqualTo(Language.JAVA);
         Assertions.assertThat(item.getPlatform()).isEqualTo(Platform.SWEA);
         Assertions.assertThat(item.getExecutionTime()).isEqualTo(0.13);
+        Assertions.assertThat(item.getTotalTestcaseCount()).isEqualTo(120);
         Assertions.assertThat(item.getCounterExampleCount()).isEqualTo(3);
         Assertions.assertThat(item.getCreatedAt()).isEqualTo(createdAt);
 
@@ -318,6 +339,51 @@ class SubmissionServiceTest {
     }
 
     @Test
+    @DisplayName("반례 생성 서비스 - 전체 테스트 케이스 수를 응답에 포함한다")
+    void create_counter_example_includes_total_testcase_count() {
+        // given
+        String email = "test@gmail.com";
+        SubmissionDto.CreateCounterExampleRequest request =
+                new SubmissionDto.CreateCounterExampleRequest(1L, Language.JAVA, "public class Main {}", true);
+        Member member = Mockito.mock(Member.class);
+        Problem problem = Mockito.mock(Problem.class);
+        Submission submission = Mockito.mock(Submission.class);
+        JsonNode counterExamplesNode = Mockito.mock(JsonNode.class);
+        SubmissionDto.CounterExampleCase counterExample = SubmissionDto.CounterExampleCase.builder()
+                .input("1 2")
+                .expectedOutput("3")
+                .actualOutput("4")
+                .build();
+        kr.wayout.domain.submission.runner.CounterExampleRunResult runResult =
+                kr.wayout.domain.submission.runner.CounterExampleRunResult.builder()
+                        .found(true)
+                        .executionTime(1.2)
+                        .totalTestcaseCount(87)
+                        .counterExamples(List.of(counterExample))
+                        .build();
+
+        BDDMockito.given(memberService.read(email)).willReturn(member);
+        BDDMockito.given(problemRepository.findById(1L)).willReturn(Optional.of(problem));
+        BDDMockito.given(counterExampleRunner.run(1L, "public class Main {}", Language.JAVA)).willReturn(runResult);
+        BDDMockito.given(objectMapper.valueToTree(List.of(counterExample))).willReturn(counterExamplesNode);
+        BDDMockito.given(submissionRepository.save(any(Submission.class))).willReturn(submission);
+
+        // when
+        SubmissionDto.CreateCounterExampleResponse response = submissionService.createCounterExample(email, request);
+
+        // then
+        Assertions.assertThat(response.getFound()).isTrue();
+        Assertions.assertThat(response.getTotalTestcaseCount()).isEqualTo(87);
+        Assertions.assertThat(response.getCounterExampleCount()).isEqualTo(1);
+        Assertions.assertThat(response.getCounterExamples()).hasSize(1);
+        BDDMockito.then(submissionRepository)
+                .should()
+                .save(Mockito.argThat(saved ->
+                        Integer.valueOf(87).equals(saved.getTotalTestcaseCount())
+                                && Integer.valueOf(1).equals(saved.getCounterExampleCount())));
+    }
+
+    @Test
     @DisplayName("제출 상세 조회 서비스 - 반례 목록이 있으면 카운트를 계산해 반환한다")
     void detail_success_with_counter_example_count() {
         // given
@@ -343,8 +409,11 @@ class SubmissionServiceTest {
         BDDMockito.given(problem.getTitle()).willReturn("A+B");
         BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
         BDDMockito.given(submission.getSourceCode()).willReturn("public class Main {}");
+        BDDMockito.given(submission.getIsFound()).willReturn(false);
         BDDMockito.given(submission.getLanguage()).willReturn(Language.JAVA);
         BDDMockito.given(submission.getExecutionTime()).willReturn(1.23);
+        BDDMockito.given(submission.getTotalTestcaseCount()).willReturn(95);
+        BDDMockito.given(submission.getCounterExampleCount()).willReturn(1);
         BDDMockito.given(submission.getCreatedAt()).willReturn(createdAt);
         Mockito.doReturn(List.of(counterExample))
                 .when(objectMapper)
@@ -356,6 +425,8 @@ class SubmissionServiceTest {
         // then
         Assertions.assertThat(result.getId()).isEqualTo(1L);
         Assertions.assertThat(result.getProblemNo()).isEqualTo(1001L);
+        Assertions.assertThat(result.getFound()).isFalse();
+        Assertions.assertThat(result.getTotalTestcaseCount()).isEqualTo(95);
         Assertions.assertThat(result.getCounterExampleCount()).isEqualTo(1);
         Assertions.assertThat(result.getCounterExamples()).hasSize(1);
         Assertions.assertThat(result.getCounterExamples().get(0).getInput()).isEqualTo("3\n1 2 3");
@@ -382,14 +453,19 @@ class SubmissionServiceTest {
         BDDMockito.given(problem.getTitle()).willReturn("A+B");
         BDDMockito.given(problem.getPlatform()).willReturn(Platform.SWEA);
         BDDMockito.given(submission.getSourceCode()).willReturn("public class Main {}");
+        BDDMockito.given(submission.getIsFound()).willReturn(false);
         BDDMockito.given(submission.getLanguage()).willReturn(Language.JAVA);
         BDDMockito.given(submission.getExecutionTime()).willReturn(1.23);
+        BDDMockito.given(submission.getTotalTestcaseCount()).willReturn(null);
+        BDDMockito.given(submission.getCounterExampleCount()).willReturn(null);
         BDDMockito.given(submission.getCreatedAt()).willReturn(createdAt);
 
         // when
         SubmissionDto.Detail result = submissionService.detail(submissionId);
 
         // then
+        Assertions.assertThat(result.getFound()).isFalse();
+        Assertions.assertThat(result.getTotalTestcaseCount()).isNull();
         Assertions.assertThat(result.getCounterExampleCount()).isZero();
         Assertions.assertThat(result.getCounterExamples()).isEmpty();
         verifyNoInteractions(objectMapper);
