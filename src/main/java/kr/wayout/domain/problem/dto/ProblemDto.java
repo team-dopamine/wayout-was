@@ -1,5 +1,6 @@
 package kr.wayout.domain.problem.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import kr.wayout.domain.problem.Platform;
 import kr.wayout.domain.problem.Problem;
 import lombok.AllArgsConstructor;
@@ -9,6 +10,7 @@ public class ProblemDto {
 
     @Getter
     @AllArgsConstructor
+    @Schema(name = "ProblemListResponse")
     public static class List {
 
         private Long problemId;
@@ -22,6 +24,7 @@ public class ProblemDto {
 
     @Getter
     @AllArgsConstructor
+    @Schema(name = "ProblemSearchResponse")
     public static class Search {
 
         private Long problemId;
@@ -42,6 +45,7 @@ public class ProblemDto {
 
     @Getter
     @AllArgsConstructor
+    @Schema(name = "ProblemDetailResponse")
     public static class Detail {
 
         private Long problemId;

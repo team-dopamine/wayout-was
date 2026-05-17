@@ -71,6 +71,8 @@ class SubmissionControllerTest {
         SubmissionDto.CreateCounterExampleResponse response = SubmissionDto.CreateCounterExampleResponse.builder()
                 .status("PENDING")
                 .message("반례 탐색 요청이 접수되었습니다.")
+                .totalTestcaseCount(100)
+                .counterExampleCount(3)
                 .build();
 
         given(submissionService.createCounterExample(isNull(), any(SubmissionDto.CreateCounterExampleRequest.class)))
@@ -81,7 +83,9 @@ class SubmissionControllerTest {
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("PENDING"));
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.totalTestcaseCount").value(100))
+                .andExpect(jsonPath("$.counterExampleCount").value(3));
     }
 
     @Test
@@ -93,9 +97,11 @@ class SubmissionControllerTest {
                 .problemNo(1001)
                 .nickname("익명")
                 .title("A+B")
+                .found(true)
                 .language(Language.JAVA)
                 .platform(Platform.SWEA)
                 .executionTime(1.5)
+                .totalTestcaseCount(100)
                 .counterExampleCount(2)
                 .createdAt(LocalDateTime.of(2026, 3, 8, 12, 0))
                 .build();
@@ -110,9 +116,11 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.content[0].problemNo").value(1001))
                 .andExpect(jsonPath("$.content[0].nickname").value("익명"))
                 .andExpect(jsonPath("$.content[0].title").value("A+B"))
+                .andExpect(jsonPath("$.content[0].found").value(true))
                 .andExpect(jsonPath("$.content[0].language").value("JAVA"))
                 .andExpect(jsonPath("$.content[0].platform").value("SWEA"))
                 .andExpect(jsonPath("$.content[0].executionTime").value(1.5))
+                .andExpect(jsonPath("$.content[0].totalTestcaseCount").value(100))
                 .andExpect(jsonPath("$.content[0].counterExampleCount").value(2))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
@@ -126,9 +134,11 @@ class SubmissionControllerTest {
                 .problemNo(1001)
                 .nickname("Jsplix")
                 .title("A+B")
+                .found(false)
                 .language(Language.CPP)
                 .platform(Platform.SWEA)
                 .executionTime(0.7)
+                .totalTestcaseCount(80)
                 .counterExampleCount(1)
                 .createdAt(LocalDateTime.of(2026, 3, 10, 10, 0))
                 .build();
@@ -144,9 +154,11 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.content[0].problemNo").value(1001))
                 .andExpect(jsonPath("$.content[0].nickname").value("Jsplix"))
                 .andExpect(jsonPath("$.content[0].title").value("A+B"))
+                .andExpect(jsonPath("$.content[0].found").value(false))
                 .andExpect(jsonPath("$.content[0].language").value("CPP"))
                 .andExpect(jsonPath("$.content[0].platform").value("SWEA"))
                 .andExpect(jsonPath("$.content[0].executionTime").value(0.7))
+                .andExpect(jsonPath("$.content[0].totalTestcaseCount").value(80))
                 .andExpect(jsonPath("$.content[0].counterExampleCount").value(1))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
@@ -178,9 +190,11 @@ class SubmissionControllerTest {
                 .problemNo(1200)
                 .nickname("Jsplix")
                 .title("부분 수열의 합")
+                .found(true)
                 .language(Language.JAVA)
                 .platform(Platform.SWEA)
                 .executionTime(0.13)
+                .totalTestcaseCount(120)
                 .counterExampleCount(3)
                 .createdAt(LocalDateTime.of(2026, 4, 16, 9, 30))
                 .build();
@@ -196,9 +210,11 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.content[0].problemNo").value(1200))
                 .andExpect(jsonPath("$.content[0].nickname").value("Jsplix"))
                 .andExpect(jsonPath("$.content[0].title").value("부분 수열의 합"))
+                .andExpect(jsonPath("$.content[0].found").value(true))
                 .andExpect(jsonPath("$.content[0].language").value("JAVA"))
                 .andExpect(jsonPath("$.content[0].platform").value("SWEA"))
                 .andExpect(jsonPath("$.content[0].executionTime").value(0.13))
+                .andExpect(jsonPath("$.content[0].totalTestcaseCount").value(120))
                 .andExpect(jsonPath("$.content[0].counterExampleCount").value(3))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
@@ -226,6 +242,8 @@ class SubmissionControllerTest {
                 .problemNo(1001L)
                 .title("A+B")
                 .sourceCode("public class Main {}")
+                .found(false)
+                .totalTestcaseCount(95)
                 .counterExampleCount(1)
                 .counterExamples(List.of(counterExample))
                 .language(Language.JAVA)
@@ -242,8 +260,10 @@ class SubmissionControllerTest {
                 .andExpect(jsonPath("$.problemNo").value(1001))
                 .andExpect(jsonPath("$.title").value("A+B"))
                 .andExpect(jsonPath("$.sourceCode").value("public class Main {}"))
+                .andExpect(jsonPath("$.found").value(false))
                 .andExpect(jsonPath("$.language").value("JAVA"))
                 .andExpect(jsonPath("$.executionTime").value(1.23))
+                .andExpect(jsonPath("$.totalTestcaseCount").value(95))
                 .andExpect(jsonPath("$.counterExampleCount").value(1))
                 .andExpect(jsonPath("$.counterExamples[0].input").value("3\n1 2 3"))
                 .andExpect(jsonPath("$.counterExamples[0].expectedOutput").value("6"))

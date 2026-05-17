@@ -15,6 +15,7 @@ public class CounterExampleRunResult {
     private boolean found;
     private Double executionTime;
     private String message;
+    private Integer totalTestcaseCount;
     private List<String> generatedInputs;
     private List<Boolean> validationResults;
     private List<SubmissionDto.CounterExampleCase> counterExamples;
